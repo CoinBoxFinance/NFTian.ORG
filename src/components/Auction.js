@@ -4,8 +4,7 @@ import Header from "./Header"
 const Auction = () => {
     return(
         <>
-        <Header />
-
+    
         <section class="page-header-section style-1">
         <div class="container">
             <div class="page-header-content">
@@ -1034,7 +1033,7 @@ const Auction = () => {
             </div>
         </div>
     </section>
-    <Footer />
+   
         </>
     )
 }

@@ -4,7 +4,7 @@ import Header from "./Header"
 const Blog1 = () =>{
     return(
         <>
-        <Header />
+     
 
         <section class="page-header-section style-1">
         <div class="container">
@@ -331,7 +331,7 @@ const Blog1 = () =>{
             </div>
         </div>
     </section>
-        <Footer />
+       
         
         </>
     )

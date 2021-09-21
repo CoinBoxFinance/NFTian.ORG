@@ -22,27 +22,38 @@ import Auction from './components/Auction';
 import Forgetpswd from './components/Forgetpassword';
 import Allauthor from './components/Allauthor';
 import Itemdetails from './components/Itemdetails';
-
+import { Layout } from './components/common/Layout'
 function App() {
+
+  const WithHeader = (props) => {
+    return(
+      <Layout type="landing">
+        {props.children}
+      </Layout>
+    )
+  }
   return (
     <>
     <Router>
       {/* <Header /> */}
       <Switch>
-        <Route exact={true} exact path="/" component={Home} />
-        <Route exact={true} path="/homeone"component={Homeone} />
-        <Route exact={true} path="/explore"component={Explore} />
-        <Route exact={true} path="/activity"component={Activity} />
-        <Route exact={true} path="/blog"component={Blog} />
-        <Route exact={true} path="/blog1"component={Blog1} />
-        <Route exact={true} path="/author"component={Author} />
-        <Route exact={true} path="/nftdetails"component={Nftdetails} />
-        <Route exact={true} path="/wallet"component={Wallet} />
-        <Route exact={true} path="/signup"component={Signup} />
-        <Route exact={true} path="/auction"component={Auction} />
-        <Route exact={true} path="/all-author"component={Allauthor} />
-        <Route exact={true} path="/forget-password"component={Forgetpswd} />
-        <Route exact={true} path="/item-details"component={Itemdetails} />
+     
+        <Route exact={true} exact path="/"  component={() => <WithHeader>{<Home/>}</WithHeader>} />
+        <Route exact={true} path="/homeone"      component={() => <WithHeader>{<Homeone/>}</WithHeader>} />
+        <Route exact={true} path="/explore" component={() => <WithHeader>{<Explore/>}</WithHeader>} />
+        <Route exact={true} path="/activity" component={() => <WithHeader>{<Activity/>}</WithHeader>} />
+        <Route exact={true} path="/blog" component={() => <WithHeader>{<Blog/>}</WithHeader>} />
+        <Route exact={true} path="/blog1" component={() => <WithHeader>{<Blog1/>}</WithHeader>} />
+        <Route exact={true} path="/author"  component={() => <WithHeader>{<Author/>}</WithHeader>} />
+        <Route exact={true} path="/nftdetails" component={() => <WithHeader>{<Nftdetails/>}</WithHeader>} />
+        <Route exact={true} path="/wallet" component={() => <WithHeader>{<Wallet/>}</WithHeader>} />
+        
+        <Route exact={true} path="/signup" component={() => <WithHeader>{<Signup/>}</WithHeader>} />
+        <Route exact={true} path="/signin" component={() => <WithHeader>{<Login/>}</WithHeader>} />
+        <Route exact={true} path="/auction" component={() => <WithHeader>{<Auction/>}</WithHeader>} />
+        <Route exact={true} path="/all-author" component={() => <WithHeader>{<Allauthor/>}</WithHeader>} />
+        <Route exact={true} path="/forget-password" component={() => <WithHeader>{<Forgetpswd/>}</WithHeader>} />
+        <Route exact={true} path="/item-details" component={() => <WithHeader>{<Itemdetails/>}</WithHeader>} />
         
       </Switch>
       {/* <Footer /> */}

@@ -1,10 +1,18 @@
-import Footer from './Footer';
-import Header from './Header';
 
+
+import { useMoralis } from "react-moralis";
 const Wallet = () => {
+    const { authenticate, isAuthenticated, user,logout,isAuthenticating } = useMoralis();
+
+
+    authenticate().then((response) => { 	
+        window.location.href="/"
+}).catch((error) => {
+        
+});
     return (
         <>
-        <Header />
+      
         <section class="page-header-section style-1">
             <div class="container">
                 <div class="page-header-content">
@@ -31,7 +39,7 @@ const Wallet = () => {
                 </div>
                 <div class="row g-3">
                     <div class="col-lg-4 col-md-6">
-                        <div class="wallet-item">
+                        <div class="wallet-item" onClick={() => authenticate()}>
                             <div class="wallet-item-inner">
                                 <div class="wallet-thumb">
                                     <a href="signin.html">
@@ -166,7 +174,7 @@ const Wallet = () => {
             </div>
         </div>
     </section>
-    <Footer />
+
         </>
     )
 }

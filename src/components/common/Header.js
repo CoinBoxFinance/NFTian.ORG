@@ -6,6 +6,7 @@ function Header()
 {
 
     const { authenticate, isAuthenticated, user,logout,isAuthenticating } = useMoralis();
+    // console.log(user.get)
     return (
         <>
             <header className="header">
@@ -13,7 +14,7 @@ function Header()
             <div className="header__content">
                 <div className="header__logo">
                     <a href="/">
-                        <img src={require('../images/logo/cbfinft-logo.png').default} alt="" />
+                        <img src={require('../../images/logo/cbfinft-logo.png').default} alt="" />
                     </a>
                 </div>
 
@@ -115,8 +116,9 @@ function Header()
                         <>
                     <div className="header__action header__action--profile">
                         <div className="dropdown">
-                        <a className="header__action-btn" type="button" href="/author">Alex Joe </a>
-
+                        {user?(
+                        <a className="header__action-btn" type="button" href="/author">{user.get("username")} </a>
+                        ):(<></>)}
                       
                             {/* <a className="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                                 aria-expanded="false" data-bs-offset="-100,10">
@@ -149,7 +151,7 @@ function Header()
                     </div>
                    
                     <div className="dropdown-item" onClick={() => logout()} disabled={isAuthenticating}>
-      Sign
+                            Sign
                                         Out <span className="ms-1"><i className="icofont-logout"></i></span></div>
                 
                     <div className="wallet-btn">
@@ -157,7 +159,8 @@ function Header()
                                 className="d-none d-md-inline">234.98ETH</span> </a>
                     </div>
                     </>
-                    ):(<></>)}
+                    ):(<a className="dropdown-item" href="/signin">
+                   Login <span className="ms-1"><i className="icofont-login"></i></span></a>)}
 
                 </div>
 

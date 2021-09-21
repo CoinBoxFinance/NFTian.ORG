@@ -4,7 +4,7 @@ import Header from './Header';
 const Activity = () => {
     return(
         <>
-        <Header />
+   
         <section class="page-header-section style-1">
         <div class="container">
             <div class="page-header-content">
@@ -184,7 +184,7 @@ const Activity = () => {
             </div>
         </div>
     </section>
-    <Footer />
+
         </>
     )
 }

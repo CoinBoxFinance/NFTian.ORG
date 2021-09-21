@@ -4,7 +4,7 @@ import Header from "./Header"
 const Author = () => {
     return(
         <>
-        <Header />
+      
     <section class="page-header-section style-1">
         <div class="container">
             <div class="page-header-content">
@@ -4302,8 +4302,7 @@ const Author = () => {
             </div>
         </div>
     </section>
- 
-  <Footer />
+
         </>
     )
 }

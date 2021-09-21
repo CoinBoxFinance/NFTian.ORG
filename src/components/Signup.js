@@ -1,10 +1,23 @@
 import Footer from "./Footer"
 import Header from "./Header"
-
+import { useMoralis } from "react-moralis";
+import React,{useState} from "react";
 const Signup = () => {
+    const { signup, isAuthenticated, user } = useMoralis();
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [email, setEmail] = useState("");
+    const mysignup=()=>{
+        
+        signup(username, password, email).then((response) => {
+           window.location.href="/"
+        }).catch((error) => {
+            
+              });
+    }
     return(
         <>
-        <Header />
+      
 
         <section class="page-header-section style-1">
         <div class="container">
@@ -30,18 +43,18 @@ const Signup = () => {
                         <h3 class="title">Sign Up</h3>
                         <form class="account-form">
                             <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="userIdInput" placeholder="user-id" />
+                                <input type="text" class="form-control" id="userIdInput" placeholder="user-id"  onChange={(e)=>setUsername(e.target.value)}/>
                                 <label for="userIdInput">User ID</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="email" class="form-control" id="floatingInput"
-                                    placeholder="name@example.com" />
+                                    placeholder="name@example.com" onChange={(e)=>setEmail(e.target.value)}/>
                                 <label for="floatingInput">Email address</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="password" class="form-control" id="floatingPassword"
-                                    placeholder="Password" />
-                                <label for="floatingPassword">Password</label>
+                                    placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
+                                <label for="floatingPassword" >Password</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="password" class="form-control" id="confirmPass"
@@ -58,9 +71,12 @@ const Signup = () => {
                                 </div>
                             </div>
                             <div class="form-group">
-                                <button class="d-block default-btn move-top"><span>Signup Now</span></button>
+
+     <span  class="d-block default-btn move-top" onClick={() => mysignup(username, password, email)}>Signups Now</span>
+                                {/* <button type="buttpn" class="d-block default-btn move-top" onClick={() => mysignup(username, password, email)}><span>Signups Now</span></button> */}
                             </div>
                         </form>
+                        <button onClick={() => signup(username, password, email)}>Sign up</button>
                         <div class="account-bottom">
                             <span class="d-block cate pt-10">Already Have an Account? <a href="signin.html"> Sign
                                     In</a></span>
@@ -97,7 +113,6 @@ const Signup = () => {
         </div>
     </div>
 
-        <Footer />
         </>
     )
 }

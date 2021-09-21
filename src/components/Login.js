@@ -1,4 +1,18 @@
+import { useMoralis } from "react-moralis";
+import React,{useState} from "react";
 const Login = () =>{
+    const { login,authenticate } = useMoralis();
+
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const weblogin=()=>{
+        
+        login(username, password).then((response) => {
+          window.location.href = "/wallet";
+        }).catch((error) => {
+            
+              });
+    }
     return(
         <>
          <div class="login-section padding-top padding-bottom">
@@ -10,12 +24,12 @@ const Login = () =>{
                                     <form class="account-form">
                                         <div class="form-floating mb-3">
                                             <input type="email" class="form-control" id="floatingInput"
-                                                placeholder="name@example.com" />
+                                                placeholder="name@example.com" onChange={(e)=>setUsername(e.target.value)} />
                                             <label for="floatingInput">Email address</label>
                                         </div>
                                         <div class="form-floating">
                                             <input type="password" class="form-control" id="floatingPassword"
-                                                placeholder="Password" />
+                                                placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
                                             <label for="floatingPassword">Password</label>
                                         </div>
                                         <div class="form-group">
@@ -27,16 +41,17 @@ const Login = () =>{
                                                 <a href="forgot-pass.html">Forgot Password?</a>
                                             </div>
                                         </div>
-                                        <div class="form-group">
-                                            <button class="d-block default-btn move-top"><span>Signin Now</span></button>
-                                        </div>
+                                        
                                     </form>
+                                    <div class="form-group">
+                                            <button class="d-block default-btn move-top" onClick={weblogin}><span>Signin Now</span></button>
+                                        </div>
                                     <div class="account-bottom">
-                                        <span class="d-block cate pt-10">Don’t Have any Account? <a href="signup.html"> Sign
+                                        <span class="d-block cate pt-10">Don’t Have any Account? <a href="/signup"> Sign
                                                 Up</a></span>
                                         <span class="or"><span>or</span></span>
                                         <h5 class="subtitle">Login With Social Media</h5>
-                                        <ul class="social-media social-color lab-ul d-flex justify-content-center">
+                                        {/* <ul class="social-media social-color lab-ul d-flex justify-content-center">
                                             <li>
                                                 <a href="#" class="facebook"><i class="icofont-facebook"></i></a>
                                             </li>
@@ -52,7 +67,7 @@ const Login = () =>{
                                             <li>
                                                 <a href="#" class="pinterest"><i class="icofont-pinterest"></i></a>
                                             </li>
-                                        </ul>
+                                        </ul> */}
                                     </div>
                                 </div>
                             </div>

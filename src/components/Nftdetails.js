@@ -5,7 +5,7 @@ const { default: Footer } = require('./Footer')
 const Nftdetails = () => {
     return (
         <>
-        <Header />
+     
         <section class="page-header-section style-1">
         <div class="container">
             <div class="page-header-content">
@@ -203,7 +203,7 @@ const Nftdetails = () => {
             </div>
         </div>
     </div>
-    <Footer />
+
     </>
     )
 }

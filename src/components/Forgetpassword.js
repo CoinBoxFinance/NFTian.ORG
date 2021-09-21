@@ -4,7 +4,7 @@ import Header from './Header';
 const Forgetpswd = () => {
     return(
         <>
-        <Header />
+      
         <section class="page-header-section style-1">
         <div class="container">
             <div class="page-header-content">
@@ -55,7 +55,7 @@ const Forgetpswd = () => {
 
         </div>
     </div>
-    <Footer />
+   
         </>
     )
 }

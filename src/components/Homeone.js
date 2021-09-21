@@ -8,7 +8,7 @@ import Header from './Header';
 const Homeone = () => {
     return(
     <div>
-        <Header />
+      
     <section class="banner-section style-2" style={{backgroundImage:"url(assets/images/banner/bg.jpg)"}}>
         <div class="container">
             <div class="banner-wrapper">
@@ -1565,7 +1565,7 @@ const Homeone = () => {
             </div>
         </div>
     </section>
-    <Footer />
+   
     </div>
     
     )

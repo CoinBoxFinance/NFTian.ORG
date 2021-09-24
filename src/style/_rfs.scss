@@ -15,7 +15,9 @@ $rfs-unit: rem !default;
 @if $rfs-unit != rem and $rfs-unit != px {
   @error "`#{$rfs-unit}` is not a valid unit for $rfs-unit. Use `px` or `rem`.";
 }
-
+.errors {
+  color: red;
+}
 // Breakpoint at where values start decreasing if screen width is smaller
 $rfs-breakpoint: 1200px !default;
 $rfs-breakpoint-unit: px !default;

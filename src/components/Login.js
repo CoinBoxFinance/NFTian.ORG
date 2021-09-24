@@ -1,19 +1,37 @@
 import { useMoralis } from "react-moralis";
+import { Link } from 'react-router-dom';
 import React,{useState} from "react";
+import { formValidation } from '../_services';
 const Login = () =>{
-    const { login,authenticate } = useMoralis();
+    const { login,authenticate,enableWeb3 } = useMoralis();
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [ERR, setERR] = useState("");
+    const errors = {
+        email: "",
+       password:"",
+       formIsValid:false,
+     };
     const weblogin=()=>{
-        
+        let params = {
+            email:username,
+            password:password
+        }
+        let validate = formValidation.loginvalidation(params,errors);
+		if(validate.formIsValid){
         login(username, password).then((response) => {
           window.location.href = "/wallet";
+        console.log(response)
         }).catch((error) => {
             
               });
+            }else{
+                console.log(validate)
+                setERR(validate)
+            }
     }
-    return(
+    return( 
         <>
          <div class="login-section padding-top padding-bottom">
                     <div class=" container">
@@ -26,11 +44,13 @@ const Login = () =>{
                                             <input type="email" class="form-control" id="floatingInput"
                                                 placeholder="name@example.com" onChange={(e)=>setUsername(e.target.value)} />
                                             <label for="floatingInput">Email address</label>
-                                        </div>
+                                            {ERR?(<span className="errors">{ERR.email}</span>):(<></>)}
+                                        </div>password
                                         <div class="form-floating">
                                             <input type="password" class="form-control" id="floatingPassword"
                                                 placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
                                             <label for="floatingPassword">Password</label>
+                                            {ERR?(<span className="errors">{ERR.password}</span>):(<></>)}
                                         </div>
                                         <div class="form-group">
                                             <div class="d-flex justify-content-between flex-wrap pt-sm-2">
@@ -47,8 +67,8 @@ const Login = () =>{
                                             <button class="d-block default-btn move-top" onClick={weblogin}><span>Signin Now</span></button>
                                         </div>
                                     <div class="account-bottom">
-                                        <span class="d-block cate pt-10">Don’t Have any Account? <a href="/signup"> Sign
-                                                Up</a></span>
+                                        <span class="d-block cate pt-10">Don’t Have any Account?<Link to="/signup"> Sign
+                                                Up</Link></span>
                                         <span class="or"><span>or</span></span>
                                         <h5 class="subtitle">Login With Social Media</h5>
                                         {/* <ul class="social-media social-color lab-ul d-flex justify-content-center">

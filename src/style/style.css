@@ -5,6 +5,7 @@ html {
     scroll-behavior: smooth;
 }
 
+
 body,
 input,
 h1,
@@ -22,6 +23,10 @@ body {
     line-height: 2;
     color: #0c0b0b;
     background: #f0f0f0;
+}
+.profile-nav .react-tabs__tab-list {
+    display: flex !important;
+    align-items: center;
 }
 
 img,
@@ -306,6 +311,7 @@ nav #menu-toggle {
     margin-bottom: 20px;
 }
 
+
 @media only screen and (min-width: 680px) {
 
     nav,
@@ -531,3 +537,4 @@ pre {
 
 
 }
+

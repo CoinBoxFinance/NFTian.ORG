@@ -1,6 +1,6 @@
-import Header from './Header';
 
-const { default: Footer } = require('./Footer')
+
+
 
 const Nftdetails = () => {
     return (

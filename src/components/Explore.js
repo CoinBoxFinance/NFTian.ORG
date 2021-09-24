@@ -1,10 +1,9 @@
-import Footer from './Footer';
-import Header from './Header';
+
 
 const Explore = () => {
     return (
         <>
-        <Header />
+      
     <section class="page-header-section style-1">
         <div class="container">
             <div class="page-header-content">
@@ -1020,7 +1019,7 @@ const Explore = () => {
             </div>
         </div>
     </section>
-    <Footer />
+ 
         </>
     )
 }

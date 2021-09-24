@@ -1,4 +1,4 @@
-import { Button, Dropdown, Modal, Nav} from "react-bootstrap";
+import { Dropdown, Nav} from "react-bootstrap";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import { useMoralis,useMoralisFile } from "react-moralis";
 import axios from 'axios';  
@@ -6,7 +6,6 @@ import 'react-tabs/style/react-tabs.css';
 import React,{useState} from "react";
 import {tokenContractAbi} from "./abi";
 import { formValidation } from '../_services';
-
 const Author = () => {
     const { web3, enableWeb3,user,Moralis } = useMoralis()
     const [tokenContractAddress, settokenContractAddress] = React.useState();
@@ -18,16 +17,13 @@ const Author = () => {
     const [selectedcat, setselectedcat] = React.useState('Art');
     const [myitems, setMyitems] = React.useState();
     const [ERR, setErrs] = React.useState();
-    const [currentUserAddress, setusrAddress] = React.useState();
-    const [message1, setmessage1] = React.useState('');
-    const [message2, setmessage2] = React.useState('');
-
-    const [show, setShow] = useState(false);
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
-    const TOKEN_CONTRACT_ADDRESS = "0x02a6391307162fe34d121aa2c64b496474280a82";
-
+    const TOKEN_CONTRACT_ADDRESS = "0x7bbF3ad741968DDd43ac9393BBae9E3B0d39a340";
+    const {
+        error,
+        isUploading,
+        moralisFile,
+        saveFile,
+      } = useMoralisFile();
      const formerrors = {
          name:"",
          image:"",
@@ -108,30 +104,18 @@ React.useEffect(() => {
     init();
     //  getitems()
   }, []);
-//   const init = () => {
-//     enableWeb3()
+  const init = () => {
+    enableWeb3()
    
-//     console.log(tokenContractAbi,"===tokenContractAbi")
-//     console.log("-----tokenContract",TOKEN_CONTRACT_ADDRESS)
-//     const tokenContract = new web3.eth.Contract(tokenContractAbi, TOKEN_CONTRACT_ADDRESS);
+    console.log(tokenContractAbi[0].abi,"===tokenContractAbi")
+    console.log("-----tokenContract",TOKEN_CONTRACT_ADDRESS)
+    const tokenContract = new web3.eth.Contract(tokenContractAbi[0].abi, TOKEN_CONTRACT_ADDRESS);
   
-//     settokenContractAddress(tokenContract)
+    settokenContractAddress(tokenContract)
   
-//   }
+  }
 
-const init = async () => {
-    // hideElement(userItemsSection);
-  
-  const web3 = await Moralis.Web3.enable();
-  console.log("abiiii",tokenContractAbi)
-  const tokenContract = new web3.eth.Contract(tokenContractAbi, TOKEN_CONTRACT_ADDRESS);
-  var  user = await Moralis.User.current();
-  
-  const userAddress = user.get('ethAddress');
-  setusrAddress(userAddress)
-  settokenContractAddress(tokenContract)
-
-}
+ 
 
   const createItem = async () => {
     let params = { name:name, image:imageFile,description:description, price:price}
@@ -140,11 +124,11 @@ const init = async () => {
     var attributes = [{
         "trait_type" : "Category",
         "value" : selectedcat,
-    },
-    {
-        "trait_type" : "Price",
-        "value" : price,
     }
+    // {
+    //     "trait_type" : "Price",
+    //     "value" : price,
+    // }
 ]
 
      const nftFile = new Moralis.File("nftFile.jpg",imageFile);
@@ -179,45 +163,24 @@ const nftFilePath = nftFile.ipfs();
 }
 
 
-const clearfields = () =>{
-    setname('')
-    setdescription('')
-    setprice('')
-    setimageFile('')
-    setselectedcat("Art")
-    setimageFileshow()
-}
-
 
 
   const mintNft = async (metadataUrl) => {
     var  user = await Moralis.User.current();
   
     const userAddress = user.get('ethAddress');
-
     console.log(userAddress)
     console.log(tokenContractAddress)
     
  await tokenContractAddress.methods.createItem(metadataUrl).send({from: userAddress}) 
 .on("transactionHash", function (hash) {
-    handleShow()
-    setmessage1("Initiating")
-    setmessage2("Waiting for reciept.")
     console.log("Hash",hash);
 })
 .on("receipt", function () {
-    setmessage1("Got reciept!!")
-    setmessage2("waiting for confirmation!!")
-   
+    console.log("Receipt");
 })
 .on("confirmation", function () {
-     setmessage1("")
-    setmessage2("Confirmed!!")
-    setTimeout(() => {
-        clearfields()
-        handleClose()
-    }, 5000);
-  
+    console.log("Confirmed");
 })
 .on("error", async function (error) {
     console.log("Error",error);
@@ -231,8 +194,7 @@ const clearfields = () =>{
 const getitems = () => {
     
 
-    const userAddress = currentUserAddress;
-    // const token = "0xAdD3D936A8EC1A4969bA73e19815cad2B7CDb086";
+    const userAddress = "0x6227019BE1442C55F652957219A291d2c95A8153";
     // alert(userAddress)
     let url =  `https://deep-index.moralis.io/api/v2/`+userAddress+`/nft/`+TOKEN_CONTRACT_ADDRESS+`?chain=rinkeby&format=decimal`;
     const headers = {  headers: {"X-API-Key": "3Ur7Kdm9AtnEnIt6haF5rEFGy2gzRFRUwVI4HxtYCJJq38su3dxYEsHpxk1v5Lip"} }
@@ -246,17 +208,7 @@ const getitems = () => {
    let createdItems = []
    if(myitems){
        createdItems = myitems.map(function(item,index){
-        let itemdata  = JSON.parse(item.metadata);
-      
-    if(itemdata){
-        let attri = []
-        attri  = itemdata.attribute.map(function(item1,index){
-            return(<><p>{item1.trait_type}:
-                <span
-                    class="yellow-color">{item1.value}
-                   {item1.trait_type=="Category"?(<></>):(<>ETH</>)} </span>
-            </p><br></br></>)
-                })
+           console.log(JSON.parse(item.metadata))
            return (  <div class="col-lg-4 col-sm-6">
            <div class="nft-item">
                <div class="nft-inner">
@@ -264,11 +216,25 @@ const getitems = () => {
                    <div class="nft-item-top d-flex justify-content-between align-items-center">
                        <div class="author-part">
                            <ul class="author-list d-flex">
-                            
+                               <li class="single-author">
+                                   <a href="author.html">
+                                   <img src={require('../images/seller/02.png') .default} alt="" />
+                                       {/* <img
+                                           src="assets/images/seller/02.png"
+                                           alt="author-img"> */}
+                                   </a>
+                               </li>
                                <li
                                    class="single-author d-flex align-items-center">
-                                  
-                                   <h6><a href="/author">{currentUserAddress}</a>
+                                   <a href="author.html"
+                                       class="veryfied">
+                                           <img src={require('../images/seller/04.png') .default} alt="" />
+                                           {/* <img
+                                           src="assets/images/seller/04.png"
+                                           alt="author-img"> */}
+                                   </a>
+                                   <h6><a href="author.html">Jhonsss
+                                           Doe</a>
                                    </h6>
                                </li>
                            </ul>
@@ -302,36 +268,60 @@ const getitems = () => {
                    
                    <div class="nft-item-bottom">
                        <div class="nft-thumb">
-                       {itemdata.image?(<img src={itemdata.image} alt="" />):(<img src={require('../images/nft-item/03.gif') .default} alt="" />)}
-                
-                         
+                       <img src={require('../images/nft-item/03.gif') .default} alt="" />
+                           {/* <img src="assets/images/nft-item/03.gif"
+                               alt="nft-img"> */}
 
+                           
+                           <ul class="nft-countdown count-down"
+                               data-date="July 05, 2022 21:14:01">
+                               <li>
+                                   <span
+                                       class="days">34</span><span
+                                       class="count-txt">D</span>
+                               </li>
+                               <li>
+                                   <span
+                                       class="hours">09</span><span
+                                       class="count-txt">H</span>
+                               </li>
+                               <li>
+                                   <span
+                                       class="minutes">32</span><span
+                                       class="count-txt">M</span>
+                               </li>
+                               <li>
+                                   <span
+                                       class="seconds">32</span><span
+                                       class="count-txt">S</span>
+                               </li>
+                           </ul>
                        </div>
                        <div class="nft-content">
-                          {itemdata.name?( <h4><a href="/nftdetails">{itemdata.name}</a> </h4>):(<></>)}
+                           <h4><a href="item-details.html">Walking
+                                   On
+                                   Air</a> </h4>
                            <div
                                class="price-like d-flex justify-content-between align-items-center">
-                                  
-                               {attri}
-
-
-                               {/* <a href="#" class="nft-like"><i
+                               <p class="nft-price">Price:
+                                   <span
+                                       class="yellow-color">0.34
+                                       ETH</span>
+                               </p>
+                               <a href="#" class="nft-like"><i
                                        class="icofont-heart"></i>
-                                   230</a> */}
+                                   230</a>
                            </div>
                        </div>
                    </div>
                </div>
            </div>
        </div>)
-    }
       })
    } 
 
     return(
         <>
-      
-     
       
     <section class="page-header-section style-1">
         <div class="container">
@@ -351,6 +341,7 @@ const getitems = () => {
   
 
 
+  
     <section class="profile-section padding-top padding-bottom">
         <div class="container">
             <div class="section-wrapper">
@@ -367,7 +358,7 @@ const getitems = () => {
                         </div>
                         <div class="profile-information">
                             <div class="profile-pic">
-                                <img src={require('../images/profile/pro.jpg').default} alt="" />
+                                <img src={require('..//images/profile/Profile.jpg').default} alt="" />
                                 {/* <img src="assets/images/profile/Profile.jpg" alt="DP"> */}
                                 <div class="custom-upload">
                                     <div class="file-btn">
@@ -385,7 +376,7 @@ const getitems = () => {
                             <ul class="profile-contact">
                                 <li class="crypto-copy">
                                     <div id="cryptoCode" class="crypto-page">
-                                        <input id="cryptoLink" value={currentUserAddress} readonly />
+                                        <input id="cryptoLink" value="0x731F9FBF4163D47B0F581DD9EC45C9" readonly />
                                         <div id="cryptoCopy" data-bs-toggle="tooltip" data-bs-placement="top"
                                             title="Copy Address">
                                             <span class="copy-icon">
@@ -469,6 +460,23 @@ const getitems = () => {
                     </div>
                     <div class="profile-details">
                        
+                                {/* <button class="nav-link active" id="nav-allNft-tab" data-bs-toggle="tab"
+                                    data-bs-target="#allNft" type="button" role="tab" aria-controls="allNft"
+                                    aria-selected="true">All NFT's</button>
+                                <button class="nav-link" id="nav-about-tab" data-bs-toggle="tab" data-bs-target="#about"
+                                    type="button" role="tab" aria-controls="about" aria-selected="false">About</button>
+                                <button class="nav-link" id="nav-activity-tab" data-bs-toggle="tab"
+                                    data-bs-target="#activity" type="button" role="tab" aria-controls="activity"
+                                    aria-selected="false">Activity</button>
+                                <button class="nav-link" id="nav-follower-tab" data-bs-toggle="tab"
+                                    data-bs-target="#follower" type="button" role="tab" aria-controls="follower"
+                                    aria-selected="false">Follower <span class="item-number">231</span></button>
+                                <button class="nav-link" id="nav-following-tab" data-bs-toggle="tab"
+                                    data-bs-target="#following" type="button" role="tab" aria-controls="following"
+                                    aria-selected="false">Following <span class="item-number">145</span></button>
+                                <button class="nav-link" id="nav-wallet-tab" data-bs-toggle="tab"
+                                    data-bs-target="#wallet" type="button" role="tab" aria-controls="wallet"
+                                    aria-selected="false">My Wallet</button> */}
                                 <Tabs>
                                 <nav class="profile-nav">
                             <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -494,10 +502,39 @@ const getitems = () => {
                                     </div>
                                     </nav>
                                
+                                {/* <div class="dropdown">
+                                    <a class="btn dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        Setting
+                                    </a>
+
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/author">Profile</a></li>
+                                        <li><a class="dropdown-item" href="#">Privacy</a></li>
+                                        <li><a class="dropdown-item" href="#">Block user</a></li>
+                                    </ul>
+                                </div> */}
+                                {/* <Dropdown>
+                                    <Dropdown.Toggle variant="unset" id="dropdown-basic" className="header__nav-link">
+                                    Setting
+                                    </Dropdown.Toggle>
+
+                                    <Dropdown.Menu>
+                                        <Dropdown.Item href="/author">Profile</Dropdown.Item>
+                                        <Dropdown.Item href="#">Privacy</Dropdown.Item>
+                                        <Dropdown.Item href="/wallet">Block user</Dropdown.Item>
+                                    </Dropdown.Menu>
+                                </Dropdown> */}
+
+                            {/* </div>
+                        </nav> */}
+                        {/* <div class="tab-content" id="nav-tabContent">
+                           
+                            <div class="tab-pane activity-page fade show active" id="allNft" role="tabpanel"> */}
                             <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-12">
+                                        <div class="col-xl-9">
                                         <Tabs>
                                             <article>
                                                 <div class="activity-tab">
@@ -524,7 +561,7 @@ const getitems = () => {
                                                     </TabList>
                                                    
                                               
-                                                        <TabPanel>
+                                                        <TabPanel>c
                                                          
                                                              <section className="form_section"> 
                                                                 <div className="container">
@@ -558,20 +595,20 @@ const getitems = () => {
                                                                                             <div>
                                                                                                 <div>
                                                                                                     <h5>Price</h5>
-                                                                                                    <input type="text"  value={price} onChange={(e)=>setprice(e.target.value)} name="item_price" id="item_price" class="input100" placeholder="enter price for one item (ETH)" />
+                                                                                                    <input type="text" onChange={(e)=>setprice(e.target.value)} name="item_price" id="item_price" class="input100" placeholder="enter price for one item (ETH)" />
                                                                                                     {ERR?(<span className="errors">{ERR.price}</span>):(<></>)}
                                                                                                 </div>
                                                                                                 <div>
                                                                                                     <h5>Title</h5>
                                                                                                   
-                                                                                                    <input type="text" onChange={(e)=>setname(e.target.value)}  value={name} name="name" id="name" class="input100" placeholder="e.g. 'Crypto Funk" />
+                                                                                                    <input type="text" onChange={(e)=>setname(e.target.value)} name="name" id="name" class="input100" placeholder="e.g. 'Crypto Funk" />
                                                                                                     {ERR?(<span className="errors">{ERR.name}</span>):(<></>)}
                                                                                                 </div>
                                                                                                 <div>
                                                                                                     <h5>Description</h5>
                                                                                                     <textarea class="form-control input100"
                                                                                     placeholder="Item Description"
-                                                                                    id="itemDesc" onChange={ (e) => setdescription(e.target.value) }  value={description}></textarea>
+                                                                                    id="itemDesc" onChange={ (e) => setdescription(e.target.value) }></textarea>
                                                                                        {ERR?(<span className="errors">{ERR.description}</span>):(<></>)}
                                                                                                 </div>
                                                                                                 <div class="item-category-field mb-30">
@@ -1341,7 +1378,6 @@ const getitems = () => {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            
                                                             <div class="load-btn">
                                                                 <a href="#" class="default-btn move-bottom"><span>Load
                                                                         More</span> </a>
@@ -1688,19 +1724,13 @@ const getitems = () => {
                                                         {/* <div class="tab-pane fade" id="pills-friends" role="tabpanel"
                                                             aria-labelledby="pills-friends-tab"> */}
                                                         <TabPanel>
-                                                            {createdItems.length>0?(
                                                             <div class="row justify-content-center gx-3 gy-2">
                                                              {createdItems}
-
                                                             </div>
-                                                            ):(      <div className="nodata-found text-center">
-                                                            <p>No Data Found</p>
-                                                        </div>)}
-                                                      
-                                                            {/* <div class="load-btn">
+                                                            <div class="load-btn">
                                                                 <a href="#" class="default-btn move-bottom"><span>Load
                                                                         More</span> </a>
-                                                            </div> */}
+                                                            </div>
                                                         {/* </div> */}
                                                         </TabPanel>
                                                         {/* <div class="tab-pane fade" id="pills-groups" role="tabpanel"
@@ -2365,7 +2395,98 @@ const getitems = () => {
                                         </div>
 
                                         
-                                    
+                                        <div class="col-xl-3">
+                                            <aside class="mt-5 mt-xl-0">
+                                                <div class="profile-widget search-widget">
+                                                    <div class="widget-inner">
+                                                        <div class="widget-title">
+                                                            <h5>Search NFT</h5>
+                                                        </div>
+                                                        <div class="widget-content">
+                                                            <p>Search from best Rarest NFT collections</p>
+                                                            <div class="form-floating nft-search-input">
+                                                                <input type="text" class="form-control"
+                                                                    placeholder="Search NFT" />
+                                                                <label>Search NFT</label>
+                                                                <button type="button"> <i
+                                                                        class="icofont-search-1"></i></button>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="widget widget-instagram">
+                                                    <div class="widget-header">
+                                                        <h5 class="title">Featured NFT</h5>
+                                                    </div>
+                                                    <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/01.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/01.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/02.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/02.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/03.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/03.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/04.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/04.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/05.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/05.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/06.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/06.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/07.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/07.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/08.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/08.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="#">
+                                                                    <img loading="lazy" src={require('../images/nft-item/09.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/09.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                    </ul>
+                                                </div>
+                                            </aside>
+                                        </div>
                                     </div>
                                 </div>
                                 </TabPanel>
@@ -2377,7 +2498,7 @@ const getitems = () => {
                             <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-12">
+                                        <div class="col-xl-9">
                                             <article>
 
                                                 <div class="info-card mb-3">
@@ -2440,6 +2561,98 @@ const getitems = () => {
                                         </div>
 
                                         
+                                        <div class="col-xl-3">
+                                            <aside class="mt-5 mt-xl-0">
+                                                <div class="profile-widget search-widget">
+                                                    <div class="widget-inner">
+                                                        <div class="widget-title">
+                                                            <h5>Search NFT</h5>
+                                                        </div>
+                                                        <div class="widget-content">
+                                                            <p>Search from best Rarest NFT collections</p>
+                                                            <div class="form-floating nft-search-input">
+                                                                <input type="text" class="form-control"
+                                                                    placeholder="Search NFT" />
+                                                                <label>Search NFT</label>
+                                                                <button type="button"> <i
+                                                                        class="icofont-search-1"></i></button>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="widget widget-instagram">
+                                                    <div class="widget-header">
+                                                        <h5 class="title">Featured NFT</h5>
+                                                    </div>
+                                                    <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/01.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/01.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/01.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/02.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/02.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/02.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/03.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/03.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/03.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/04.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/04.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/04.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/05.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/05.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/05.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/06.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/06.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/06.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/07.jp">
+                                                                    <img loading="lazy" src={require('../images/nft-item/07.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/07.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/08.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/08.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/08.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/09.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/09.jpg') .default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/09.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                    </ul>
+                                                </div>
+                                            </aside>
+                                        </div>
                                     </div>
                                 </div>
                                 </TabPanel>
@@ -2449,7 +2662,7 @@ const getitems = () => {
                             <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-12">
+                                        <div class="col-xl-9">
                                             <article>
                                                 <h4 class="h4-title">Author's Activity</h4>
                                                 <div class="row gy-3">
@@ -2569,7 +2782,98 @@ const getitems = () => {
                                         </div>
 
                                         
-                                        
+                                        <div class="col-xl-3">
+                                            <aside class="mt-5 mt-xl-0">
+                                                <div class="profile-widget search-widget">
+                                                    <div class="widget-inner">
+                                                        <div class="widget-title">
+                                                            <h5>Search NFT</h5>
+                                                        </div>
+                                                        <div class="widget-content">
+                                                            <p>Search from best Rarest NFT collections</p>
+                                                            <div class="form-floating nft-search-input">
+                                                                <input type="text" class="form-control"
+                                                                    placeholder="Search NFT" />
+                                                                <label>Search NFT</label>
+                                                                <button type="button"> <i
+                                                                        class="icofont-search-1"></i></button>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="widget widget-instagram">
+                                                    <div class="widget-header">
+                                                        <h5 class="title">Featured NFT</h5>
+                                                    </div>
+                                                    <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/01.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/01.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/01.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/02.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/02.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/02.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/03.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/03.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/03.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/04.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/04.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/04.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/05.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/05.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/05.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/06.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/06.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/06.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/07.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/07.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/07.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/08.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/08.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/08.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/09.jpg">
+                                                                    <img loading="" src={require('../images/nft-item/09.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/09.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                    </ul>
+                                                </div>
+                                            </aside>
+                                        </div>
                                     </div>
                                 </div>
                             {/* </div> */}
@@ -2579,7 +2883,7 @@ const getitems = () => {
                                <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-12">
+                                        <div class="col-xl-9">
                                             <div class="follow-wrapper">
                                                 <h4 class="h4-title">All Followers</h4>
                                                 <div class="row g-3">
@@ -2988,7 +3292,98 @@ const getitems = () => {
                                         </div>
 
                                         
-                                       
+                                        <div class="col-xl-3">
+                                            <aside class="mt-5 mt-xl-0">
+                                                <div class="profile-widget search-widget">
+                                                    <div class="widget-inner">
+                                                        <div class="widget-title">
+                                                            <h5>Search NFT</h5>
+                                                        </div>
+                                                        <div class="widget-content">
+                                                            <p>Search from best Rarest NFT collections</p>
+                                                            <div class="form-floating nft-search-input">
+                                                                <input type="text" class="form-control"
+                                                                    placeholder="Search NFT" />
+                                                                <label>Search NFT</label>
+                                                                <button type="button"> <i
+                                                                        class="icofont-search-1"></i></button>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="widget widget-instagram">
+                                                    <div class="widget-header">
+                                                        <h5 class="title">Featured NFT</h5>
+                                                    </div>
+                                                    <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/01.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/01.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/01.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/02.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/02.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/02.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/03.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/03.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/03.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/04.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/04.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/04.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/05.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/05.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/05.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/06.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/06.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/06.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/07.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/07.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/07.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/08.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/08.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/08.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                        <li><a data-rel="lightcase"
+                                                                href="assets/images/nft-item/09.jpg">
+                                                                    <img loading="lazy" src={require('../images/nft-item/09.jpg').default} alt="" />
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/09.jpg"
+                                                                    alt="nft-img"> */}
+                                                            </a></li>
+                                                    </ul>
+                                                </div>
+                                            </aside>
+                                        </div>
                                     </div>
                                 </div>
                             {/* </div> */}
@@ -2998,7 +3393,7 @@ const getitems = () => {
                                 aria-labelledby="nav-following-tab"> */}
                                 <TabPanel>
                                 <div class="row">
-                                    <div class="col-xl-12">
+                                    <div class="col-xl-9">
                                         <div class="follow-wrapper">
                                             <h4 class="h4-title">Following</h4>
                                             <div class="row g-3">
@@ -3395,7 +3790,98 @@ const getitems = () => {
                                     </div>
 
                                    
-                                   
+                                    <div class="col-xl-3">
+                                        <aside class="mt-5 mt-xl-0">
+                                            <div class="profile-widget search-widget">
+                                                <div class="widget-inner">
+                                                    <div class="widget-title">
+                                                        <h5>Search NFT</h5>
+                                                    </div>
+                                                    <div class="widget-content">
+                                                        <p>Search from best Rarest NFT collections</p>
+                                                        <div class="form-floating nft-search-input">
+                                                            <input type="text" class="form-control"
+                                                                placeholder="Search NFT" />
+                                                            <label>Search NFT</label>
+                                                            <button type="button"> <i
+                                                                    class="icofont-search-1"></i></button>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="widget widget-instagram">
+                                                <div class="widget-header">
+                                                    <h5 class="title">Featured NFT</h5>
+                                                </div>
+                                                <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/01.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/01.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/01.jpg" alt="nft-img"> */}
+                                                        </a>
+                                                    </li>
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/02.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/02.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/02.jpg" alt="nft-img"> */}
+                                                         </a>
+                                                    </li>
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/03.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/03.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/03.jpg" alt="nft-img"> */}
+                                                         </a>
+                                                    </li>
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/04.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/04.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/04.jpg" alt="nft-img"> */}
+                                                            </a>
+                                                    </li>
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/05.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/02.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/05.jpg" alt="nft-img"> */}
+                                                        </a>
+                                                    </li>
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/06.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/06.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/06.jpg" alt="nft-img"> */}
+                                                        </a>
+                                                    </li>
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/07.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/07.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/07.jpg" alt="nft-img"> */}
+                                                         </a>
+                                                    </li>
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/08.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/08.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/08.jpg" alt="nft-img"> */}
+                                                        </a>
+                                                    </li>
+                                                    <li><a data-rel="lightcase"
+                                                            href="assets/images/nft-item/09.jpg">
+                                                                <img loading="lazy" src={require('../images/nft-item/09.jpg').default} alt="" />
+                                                                {/* <img loading="lazy"
+                                                                src="assets/images/nft-item/09.jpg" alt="nft-img"> */}
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </aside>
+                                    </div>
                                 </div>
                             {/* </div> */}
                             </TabPanel>
@@ -3404,7 +3890,7 @@ const getitems = () => {
                             <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-12">
+                                        <div class="col-xl-9">
                                             <div class="wallet-wrapper">
                                                 <div class="wallet-title">
                                                     <h4>Connect your wallet</h4>
@@ -3510,7 +3996,7 @@ const getitems = () => {
                                             </div>
                                         </div>
                                        
-                                        {/* <div class="col-xl-3">
+                                        <div class="col-xl-3">
                                             <aside class="mt-5 mt-xl-0">
                                                 <div class="profile-widget search-widget">
                                                     <div class="widget-inner">
@@ -3538,42 +4024,58 @@ const getitems = () => {
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/01.jpg">
                                                                     <img loading="lazy" src={require('../images/nft-item/01.jpg').default} alt="" />
-                                                                   
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/01.jpg"
+                                                                    alt="nft-img"> */}
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/02.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/02.jpg').default} alt="" />
-                                                                   
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/02.jpg"
+                                                                    alt="nft-img"> */}
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/03.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/03.jpg').default} alt="" />
-                                                                   
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/03.jpg"
+                                                                    alt="nft-img"> */}
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/04.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/04.jpg').default} alt="" />
-                                                                  
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/04.jpg"
+                                                                    alt="nft-img"> */}
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/05.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/05.jpg').default} alt="" />
-                                                                   
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/05.jpg"
+                                                                    alt="nft-img"> */}
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/06.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/06.jpg').default} alt="" />
-                                                                  
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/06.jpg"
+                                                                    alt="nft-img"> */}
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/07.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/07.jpg').default} alt="" />
-                                                                   
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/07.jpg"
+                                                                    alt="nft-img"> */}
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/08.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/08.jpg').default} alt="" />
-                                                                   
+                                                                    {/* <img loading="lazy"
+                                                                    src="assets/images/nft-item/08.jpg"
+                                                                    alt="nft-img"> */}
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/09.jpg">
@@ -3585,7 +4087,7 @@ const getitems = () => {
                                                     </ul>
                                                 </div>
                                             </aside>
-                                        </div> */}
+                                        </div>
                                     </div>
                                 </div>
                                 </TabPanel>
@@ -3597,24 +4099,7 @@ const getitems = () => {
             </div>
         </div>
     </section>
-    
-    
 
-      <Modal show={show} onHide={handleClose}
-      size="md"
-      aria-labelledby="contained-modal-title-vcenter"
-      centered className="loader-modal">
-        {/* <Modal.Header closeButton>
-          <Modal.Title></Modal.Title>
-        </Modal.Header> */}
-        <Modal.Body className="text-center py-0">
-            <h3>{message1}</h3>
-            <div className="loader-gif">
-                <img src={require('../images/nft-pop-image.gif').default}></img>
-            </div>
-            <p>{message2}</p>
-        </Modal.Body>
-      </Modal>
         </>
     )
 }

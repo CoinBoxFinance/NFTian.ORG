@@ -1,19 +1,32 @@
-import Footer from "./Footer"
-import Header from "./Header"
+import { Link } from 'react-router-dom';
 import { useMoralis } from "react-moralis";
 import React,{useState} from "react";
+import { formValidation } from '../_services';
 const Signup = () => {
     const { signup, isAuthenticated, user } = useMoralis();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [cpassword, setCPassword] = useState("");
     const [email, setEmail] = useState("");
+    const [ERR, setErr] = useState("");
+    const errors =   {
+        username:"",
+        email:"",
+        password:"",
+        cpassword:"",
+        formIsValid:false,
+    }
     const mysignup=()=>{
-        
-        signup(username, password, email).then((response) => {
-           window.location.href="/"
-        }).catch((error) => {
-            
-              });
+    let params = { username:username, email:email,password:password, cpassword:cpassword}
+    let validate = formValidation.Register_validation(params,errors);
+    if(validate.formIsValid){
+    signup(username, password, email).then((response) => {
+      window.location.href="/"
+    }).catch((error) => {
+     });
+    }else{
+    setErr(validate)
+    }
     }
     return(
         <>
@@ -45,21 +58,26 @@ const Signup = () => {
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="userIdInput" placeholder="user-id"  onChange={(e)=>setUsername(e.target.value)}/>
                                 <label for="userIdInput">User ID</label>
+                                {ERR?(<span className="errors">{ERR.username}</span>):(<></>)}
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="email" class="form-control" id="floatingInput"
                                     placeholder="name@example.com" onChange={(e)=>setEmail(e.target.value)}/>
                                 <label for="floatingInput">Email address</label>
+                                {ERR?(<span className="errors">{ERR.email}</span>):(<></>)}
+
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="password" class="form-control" id="floatingPassword"
                                     placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
                                 <label for="floatingPassword" >Password</label>
+                                {ERR?(<span className="errors">{ERR.password}</span>):(<></>)}
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="password" class="form-control" id="confirmPass"
-                                    placeholder="Confirm Password" />
+                                    placeholder="Confirm Password" onChange={(e)=>setCPassword(e.target.value)}/>
                                 <label for="confirmPass">Confirm Password</label>
+                                {ERR?(<span className="errors">{ERR.cpassword}</span>):(<></>)}
                             </div>
                             <div class="form-group">
                                 <div class="d-flex justify-content-between flex-wrap pt-sm-2">
@@ -78,8 +96,8 @@ const Signup = () => {
                         </form>
                         <button onClick={() => signup(username, password, email)}>Sign up</button>
                         <div class="account-bottom">
-                            <span class="d-block cate pt-10">Already Have an Account? <a href="signin.html"> Sign
-                                    In</a></span>
+                            <span class="d-block cate pt-10">Already Have an Account?<Link to="/signin"> Sign
+                                    In</Link></span>
                             <span class="or"><span>or</span></span>
                             <h5 class="subtitle">Signup With Social Media</h5>
                             <ul class="social-media social-color lab-ul d-flex justify-content-center">

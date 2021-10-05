@@ -1,9 +1,74 @@
-
+import { useEffect, useState, setState } from 'react';
+import AliceCarousel from 'react-alice-carousel';
+import 'react-alice-carousel/lib/alice-carousel.css';
 
 const Blog = () => {
+
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPage, setTotalPage] = useState(0);
+    const pageContentCnt = 5;
+    const pageNumberCnt = 5;
+    const [blogs, setBlogs] = useState([]);
+    const [currentBlogs, setCurrentBlogs] = useState([]);
+    const [pageNumbers, setPageNumbers] = useState([{"target": 0, "string": "1"}]);
+    useEffect(async () => {
+        const response = await fetch('https://min-api.cryptocompare.com/data/v2/news/?feed=NFT');
+        const myJson = await response.json(); //extract JSON from the http response
+        setBlogs(myJson["Data"]);
+        var floor = Math.floor(myJson["Data"].length/pageContentCnt);
+        if( floor * pageContentCnt < myJson["Data"].length)
+            floor ++;
+        if( floor == 0)
+            floor = 1;
+        setTotalPage(floor);
+        setPage(0, myJson["Data"], floor);
+    }, []);
+    const setPage = function(pageIndex, dataBlogs, totalPage) {
+        var firstPage, endPage;
+        var deltaPageNumCnt = Math.floor( pageNumberCnt/2);
+        firstPage = pageIndex - deltaPageNumCnt;
+        if( firstPage < 0)
+            firstPage = 0;
+        endPage = firstPage + pageNumberCnt - 1;
+        if( endPage >= totalPage)
+            endPage = totalPage - 1;
+        firstPage = endPage - pageNumberCnt + 1;
+        if( firstPage < 0) firstPage = 0;
+        var pageNumbers_tmp = [];
+        for(var i = firstPage; i <= endPage; i ++) {
+            pageNumbers_tmp.push({"target": i, "string": "" + (i + 1)});
+        }
+        setPageNumbers(pageNumbers_tmp);
+        var startIndex, endIndex;
+        startIndex = pageIndex * pageContentCnt;
+        endIndex = startIndex + pageContentCnt;
+        if( endIndex > dataBlogs.length)
+            endIndex = dataBlogs.length;
+        setCurrentPage(pageIndex);
+        setCurrentBlogs(dataBlogs.slice(startIndex, endIndex));
+    }
+    const setNextPage = function() {
+        if( currentPage + 1 >= totalPage)
+            return;
+        setPage(currentPage + 1, blogs, totalPage);
+    }
+    const setPrevPage = function() {
+        if( currentPage <= 0)
+            return;
+        setPage(currentPage - 1, blogs, totalPage);
+    }
+    const setFirstPage = function() {
+        setPage(0, blogs, totalPage);
+    }
+    const setLastPage = function() {
+        if( totalPage != 0)
+            setPage( totalPage - 1, blogs, totalPage);
+        else
+            setPage( 0, blogs, totalPage);
+    }
     return(
-        <>
-     
+    <>
+
     <section class="page-header-section style-1">
         <div class="container">
             <div class="page-header-content">
@@ -13,7 +78,7 @@ const Blog = () => {
                     </div>
                     <ol class="breadcrumb">
                         <li><a href="index.html">Home</a></li>
-                        <li class="active">Blog Right Sidebar </li>
+                        <li class="active">Blog Page </li>
                     </ol>
                 </div>
             </div>
@@ -23,316 +88,60 @@ const Blog = () => {
     <section class="blog-section padding-top padding-bottom">
         <div class="container">
             <div class="main-blog">
-                <div class="row g-5">
-                    <div class="col-xl-9 col-12">
+                <div class="row">
+                    <div class="col-lg-9 col-12">
                         <div class="blog-wrapper">
-                            <div class="row justify-content-center gx-4 gy-3">
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/01.jpg').default} alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/01.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1">The Rise of the Non Fungible Tokens
-                                                            (NFTs)</a> </h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-
-                                                        <p><span><i class="icofont-user"></i></span>Jhon doe</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                        { blogs.length != 0 && 
+                        (currentBlogs.map((blog) => (
+                            <div class="post-item">
+                                <div class="post-item-inner">
+                                    <div class="post-thumb">
+                                        <a href={blog.url} target = "_blank">
+                                            <img src={blog.imageurl} alt="blog" />
+                                            { /*<img src="assets/images/blog/01.gif" alt="blog">*/ }
+                                        </a>
                                     </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/02.jpg').default} alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/02.jpg" alt="blog-img" > */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1"> Top 5 Most Popular NFT Games in
-                                                            2021</a></h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Rassel H.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="post-content">
+                                        <span class="meta">By <a href="#">Admin</a> March 24, 2021</span>
+                                        <h3><a href={blog.url} target = "_blank">{blog.title}</a></h3>
+                                        <p>{blog.body}</p>
                                     </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/03.jpg').default} alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/03.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1">Best NFT Selling Marketplace
-                                                            website</a> </h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Alex zym</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/04.jpg').default} alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/04.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="bv">The Rise of the Non Fungible Tokens
-                                                            (NFTs)</a> </h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Jhon doe</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/05.jpg').default} alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/05.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1"> Top 5 Most Popular NFT Games in
-                                                            2021</a></h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Rassel H.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/06.jpg') .default} alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/06.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1">Best NFT Selling Marketplace
-                                                            website</a> </h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Alex zym</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/07.jpg').default} alr="" />
-                                                {/* <img src="assets/images/nft-item/blog/07.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1">The Rise of the Non Fungible Tokens
-                                                            (NFTs)</a> </h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Jhon doe</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/08.jpg').default} alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/08.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1"> Top 5 Most Popular NFT Games in
-                                                            2021</a></h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Rassel H.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/09.jpg').default} alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/09.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1">Best NFT Selling Marketplace
-                                                            website</a> </h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Alex zym</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                                <img src={require('../images/nft-item/blog/10.jpg').default}  alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/10.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1">The Rise of the Non Fungible Tokens
-                                                            (NFTs)</a> </h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Jhon doe</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                            <img src={require('../images/nft-item/blog/11.jpg').default}  alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/11.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1"> Top 5 Most Popular NFT Games in
-                                                            2021</a></h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Rassel H.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-6">
-                                    <div class="nft-item blog-item">
-                                        <div class="nft-inner">
-                                            <div class="nft-thumb">
-                                            <img src={require('../images/nft-item/blog/12.jpg').default}  alt="" />
-                                                {/* <img src="assets/images/nft-item/blog/12.jpg" alt="blog-img"> */}
-                                            </div>
-                                            <div class="nft-content">
-                                                <div class="author-details">
-                                                    <h4><a href="/blog1">Best NFT Selling Marketplace
-                                                            website</a> </h4>
-                                                    <div class="meta-info">
-                                                        <p class="date"><span><i
-                                                                    class="icofont-ui-calendar"></i></span>July 20
-                                                            2021
-                                                        </p>
-                                                        <p><span><i class="icofont-user"></i></span>Alex zym</p>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                    <div class="blog-footer">
+                                        <a href={blog.url} target = "_blank">Read More <i
+                                                class="icofont-double-right"></i></a>
+                                        <div class="right">
+                                            <a href="#" class="blog-heart"><i class="icofont-heart-alt"></i> {blog.upvotes} <span
+                                                    class="d-none d-sm-inline-block">Like</span> </a>
+                                            <a href="#" class="blog-comment"><i class="icofont-comment"></i> 24
+                                                <span class="d-none d-sm-inline-block">Comments</span> </a>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        )))
+                        }
                         </div>
                         <div class="paginations">
                             <ul class="lab-ul d-flex flex-wrap justify-content-center mb-1">
-                                <li>
+                                <li onClick={() => setFirstPage()}>
+                                    <a href="#">First</a>
+                                </li>
+                                <li onClick={() => setPrevPage()}>
                                     <a href="#"><i class="icofont-rounded-double-left"></i></a>
                                 </li>
-                                <li>
-                                    <a href="#">1</a>
-                                </li>
-                                <li class="d-none d-sm-block">
-                                    <a href="#">2</a>
-                                </li>
-                                <li>
-                                    <a href="#">...</a>
-                                </li>
-                                <li class="d-none d-sm-block">
-                                    <a href="#">4</a>
-                                </li>
-                                <li>
-                                    <a href="#">5</a>
-                                </li>
-                                <li>
+                                {pageNumbers.map((pageNumber) => (<li onClick={() => setPage(pageNumber.target, blogs, totalPage)}>
+                                    <a className = {pageNumber.target==currentPage?"active":""} href="#">{pageNumber.string}</a>
+                                </li>))}
+                                <li onClick={() => setNextPage()}>
                                     <a href="#"><i class="icofont-rounded-double-right"></i></a>
+                                </li>
+                                <li onClick={() => setLastPage()}>
+                                    <a href="#">Last</a>
                                 </li>
                             </ul>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-12">
+                    <div class="col-lg-3 col-12">
                         <aside>
                             <div class="profile-widget search-widget">
                                 <div class="widget-inner">
@@ -343,11 +152,10 @@ const Blog = () => {
                                         <p>Search from the newest post collections</p>
                                         <div class="form-floating nft-search-input">
                                             <input type="text" class="form-control" id="nftSearch"
-                                                placeholder="Search post" />
+                                                placeholder="Search post"/>
                                             <label for="nftSearch">Search post</label>
                                             <button type="button"> <i class="icofont-search-1"></i></button>
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
@@ -394,14 +202,14 @@ const Blog = () => {
                                 <ul class="widget-wrapper">
                                     <li class="d-flex flex-wrap justify-content-between">
                                         <div class="post-thumb">
-                                            <a href="blog-single.html">
-                                            <img src={require('../images/nft-item/blog/01.jpg').default}  alt="" />
-                                                {/* <img src="assets/images/blog/01.jpg"
-                                                    alt="post-img"> */}
+                                            <a href="Blog1">
+                                                <img src={require('../images/blog/01.jpg').default} alt="post-img" />
+                                                { /*<img src="assets/images/blog/01.jpg"
+                                                    alt="post-img">*/ }
                                             </a>
                                         </div>
                                         <div class="post-content">
-                                            <a href="blog-single.html">
+                                            <a href="Blog1">
                                                 <h6>Poor People’s Campaign Our Resources</h6>
                                             </a>
                                             <p>July 23,2021</p>
@@ -409,14 +217,14 @@ const Blog = () => {
                                     </li>
                                     <li class="d-flex flex-wrap justify-content-between">
                                         <div class="post-thumb">
-                                            <a href="blog-single.html">
-                                            <img src={require('../images/nft-item/blog/02.jpg').default}  alt="" />
-                                                {/* <img src="assets/images/blog/02.jpg"
-                                                    alt="post-img"> */}
+                                            <a href="Blog1">
+                                                <img src={require('../images/blog/02.jpg').default} alt="post-img" />
+                                                { /*<img src="assets/images/blog/02.jpg"
+                                                    alt="post-img">*/ }
                                             </a>
                                         </div>
                                         <div class="post-content">
-                                            <a href="blog-single.html">
+                                            <a href="Blog1">
                                                 <h6>Boosting Social For NGO And Charities </h6>
                                             </a>
                                             <p>July 23,2021</p>
@@ -424,14 +232,14 @@ const Blog = () => {
                                     </li>
                                     <li class="d-flex flex-wrap justify-content-between">
                                         <div class="post-thumb">
-                                            <a href="blog-single.html">
-                                            <img src={require('../images/nft-item/blog/03.jpg').default}  alt="" />
-                                                {/* <img src="assets/images/blog/03.jpg"
-                                                    alt="post-img"> */}
+                                            <a href="Blog1">
+                                                <img src={require('../images/blog/03.jpg').default} alt="post-img" />
+                                                { /*<img src="assets/images/blog/03.jpg"
+                                                    alt="post-img">*/ }
                                             </a>
                                         </div>
                                         <div class="post-content">
-                                            <a href="blog-single.html">
+                                            <a href="Blog1">
                                                 <h6>Poor People’s Campaign Our Resources</h6>
                                             </a>
                                             <p>July 23,2021</p>
@@ -439,6 +247,36 @@ const Blog = () => {
                                     </li>
                                 </ul>
                             </div>
+
+                            <div class="widget widget-archive">
+                                <div class="widget-header">
+                                    <h5 class="title">Our Archives</h5>
+                                </div>
+                                <ul class="widget-wrapper">
+                                    <li><a href="#" class="d-flex flex-wrap justify-content-between"><span><i
+                                                    class="icofont-double-right"></i>January</span><span>2021</span></a>
+                                    </li>
+                                    <li><a href="#" class="d-flex flex-wrap justify-content-between"><span><i
+                                                    class="icofont-double-right"></i>February</span><span>2020</span></a>
+                                    </li>
+                                    <li><a href="#" class="d-flex active flex-wrap justify-content-between"><span><i
+                                                    class="icofont-double-right"></i>March</span><span>2019</span></a>
+                                    </li>
+                                    <li><a href="#" class="d-flex flex-wrap justify-content-between"><span><i
+                                                    class="icofont-double-right"></i>April</span><span>2018</span></a>
+                                    </li>
+                                    <li><a href="#" class="d-flex flex-wrap justify-content-between"><span><i
+                                                    class="icofont-double-right"></i>June</span><span>2017</span></a>
+                                    </li>
+                                    <li><a href="#" class="d-flex flex-wrap justify-content-between"><span><i
+                                                    class="icofont-double-right"></i>June</span><span>2016</span></a>
+                                    </li>
+                                    <li><a href="#" class="d-flex flex-wrap justify-content-between"><span><i
+                                                    class="icofont-double-right"></i>February</span><span>2015</span></a>
+                                    </li>
+                                </ul>
+                            </div>
+
                             <div class="widget widget-tags">
                                 <div class="widget-header">
                                     <h5 class="title">Our Popular Tags</h5>

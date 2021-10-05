@@ -4,16 +4,9 @@ import { useMoralis } from "react-moralis";
 import { Link } from 'react-router-dom';
 function Header()
 {
-    // const loginwithmetamask = () => {
-    //     // enableWeb3()
-    //     Moralis.authenticate().then(function (user) { 
-          
-    //     })
-    // }
 
-    const {  authenticate,isAuthenticated, user,logout,isAuthenticating,Moralis } = useMoralis();
+    const { authenticate, isAuthenticated, user,logout,isAuthenticating } = useMoralis();
     // console.log(user.get)
-    
     return (
         <>
  
@@ -23,7 +16,7 @@ function Header()
             <div className="header__content">
                 <div className="header__logo">
                     <a href="/">
-                        <img src={require('../../images/logo/NFTIAN.png').default} alt="" />
+                        <img src={require('../../images/logo/cbfinft-logo.png').default} alt="" />
                     </a>
                 </div>
 
@@ -67,10 +60,8 @@ function Header()
                         </li>
                         
 
-                        <li className="header__nav-item">   <a href="/blog" className="header__nav-link">Blog</a>
-                        
-
-                            {/* <Dropdown>
+                        <li className="header__nav-item">
+                            <Dropdown>
                                 <Dropdown.Toggle variant="unset" id="dropdown-basic" className="header__nav-link">
                                     Blog
                                 </Dropdown.Toggle>
@@ -79,10 +70,10 @@ function Header()
                                     <Dropdown.Item href="/blog">Blog 1</Dropdown.Item>
                                     <Dropdown.Item href="/blog1">Blog 2</Dropdown.Item>
                                 </Dropdown.Menu>
-                            </Dropdown> */}
+                            </Dropdown>
                         </li>
                         
-                        {/* <li className="header__nav-item">
+                        <li className="header__nav-item">
                             <Dropdown>
                                 <Dropdown.Toggle variant="unset" id="dropdown-basic" className="header__nav-link">
                                 Pages
@@ -93,14 +84,14 @@ function Header()
                                     <Dropdown.Item href="/all-author">ALL Authors</Dropdown.Item>
                                     <Dropdown.Item href="/author">Author Profile</Dropdown.Item>
                                     <Dropdown.Item href="/wallet">Wallet Connect</Dropdown.Item>
-                                   
+                                    {/* <Dropdown.Item href="404.html">404</Dropdown.Item> */}
                                     <Dropdown.Item href="/forget-password">Forgot Password</Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
-                        </li> */}
+                        </li>
 
                         
-{/* 
+
                         <li className="header__nav-item">
                             <a className="header__nav-link" href="#" role="button" data-bs-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false" data-bs-offset="0,10"><svg
@@ -113,7 +104,7 @@ function Header()
                                 <li><a className="drop-down-item" href="contact.html">Contact </a></li>
                                 <li><a className="drop-down-item" href="coming-soon.html">Coming soon</a></li>
                             </ul>
-                        </li> */}
+                        </li>
                     </ul>
                 </div>
 
@@ -161,7 +152,7 @@ function Header()
                         </div>
                     </div>
                    
-                    <div className="dropdown-item header__action-btn" onClick={() => logout()} disabled={isAuthenticating}>
+                    <div className="dropdown-item" onClick={() => logout()} disabled={isAuthenticating}>
                             Sign
                                         Out <span className="ms-1"><i className="icofont-logout"></i></span></div>
                 
@@ -170,9 +161,8 @@ function Header()
                                 className="d-none d-md-inline">234.98ETH</span> </a>
                     </div>
                     </>
-                    ):(<>   <div className="dropdown-item" onClick={() => authenticate()} >
-                     Connect with metamask <span className="ms-1"></span></div><Link className="dropdown-item" to="/signin">
-                   Login <span className="ms-1"><i className="icofont-login"></i></span></Link></>)}
+                    ):(<Link className="dropdown-item" to="/signin">
+                   Login <span className="ms-1"><i className="icofont-login"></i></span></Link>)}
 
                 </div>
 
@@ -184,7 +174,7 @@ function Header()
             </div>
         </div>
         <pre>
-      {/* {JSON.stringify(user)} */}
+      {JSON.stringify(user)}
     </pre>
     </header>
         </>

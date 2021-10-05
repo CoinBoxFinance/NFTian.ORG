@@ -3,14 +3,12 @@
 import { useMoralis } from "react-moralis";
 
 const Wallet = () => {
-    const { authenticate, isAuthenticated, user,Moralis, enableWeb3 } = useMoralis();
-const loginwithmetamask = () => {
-    enableWeb3()
-    Moralis.authenticate().then(function (user) {
-        console.log(user.get('ethAddress'))
-    })
-}
-    
+    const { authenticate,user, Moralis} = useMoralis();
+    const unsubscribe = Moralis.Web3.onAccountsChanged(function(accounts) {
+        console.log(accounts);
+        //alert(accounts);
+    });
+
 // enableWeb3()
     return (
         <>
@@ -41,29 +39,28 @@ const loginwithmetamask = () => {
                 </div>
                 <div class="row g-3">
                     <div class="col-lg-4 col-md-6">
-                        <div class="wallet-item" onClick={()=>authenticate()}>
+                        <div class="wallet-item" onClick={() => authenticate()}>
                             <div class="wallet-item-inner">
                                 <div class="wallet-thumb">
-                                    {/* <a href="#"> */}
+                                    <a href="signin.html">
                                         <img src={require('../images/wallet/06.png').default} alt="" />
                                         {/* <img src="assets/images/wallet/06.png" alt="wallet-img"> */}
-                                    {/* </a> */}
+                                    </a>
                                 </div>
                                 <div class="wallet-content">
                                     <h5><a href="signin.html">Meta Mask</a></h5>
-                                    {isAuthenticated?(<p>Connected with metamask</p>):( <p>Connect with metamask.</p>)}
-                                    
+                                    <p>Lorem ipsum dolor sit amet consectetur.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {/* <div class="col-lg-4 col-md-6">
+                    <div class="col-lg-4 col-md-6">
                         <div class="wallet-item">
                             <div class="wallet-item-inner">
                                 <div class="wallet-thumb">
                                     <a href="signin.html">
                                         <img src={require('../images/wallet/07.png').default} alt="" />
-                                    
+                                        {/* <img src="assets/images/wallet/07.png" alt="wallet-img"> */}
                                     </a>
                                 </div>
                                 <div class="wallet-content">
@@ -79,7 +76,7 @@ const loginwithmetamask = () => {
                                 <div class="wallet-thumb">
                                     <a href="signin.html">
                                         <img src={require('../images/wallet/08.png').default} alt="" />
-                                     
+                                        {/* <img src="assets/images/wallet/08.png" alt="wallet-img"> */}
                                     </a>
                                 </div>
                                 <div class="wallet-content">
@@ -95,7 +92,7 @@ const loginwithmetamask = () => {
                                 <div class="wallet-thumb">
                                     <a href="signin.html">
                                         <img src={require('../images/wallet/01.png').default} alt="" />
-                                      
+                                        {/* <img src="assets/images/wallet/01.png" alt="wallet-img"> */}
                                     </a>
                                 </div>
                                 <div class="wallet-content">
@@ -111,7 +108,7 @@ const loginwithmetamask = () => {
                                 <div class="wallet-thumb">
                                     <a href="signin.html">
                                         <img src={require('../images/wallet/02.png').default} alt="" />
-                               
+                                        {/* <img src="assets/images/wallet/02.png" alt="wallet-img"> */}
                                     </a>
                                 </div>
                                 <div class="wallet-content">
@@ -127,7 +124,7 @@ const loginwithmetamask = () => {
                                 <div class="wallet-thumb">
                                     <a href="signin.html">
                                         <img src={require('../images/wallet/03.png').default} alt="" />
-                                   
+                                        {/* <img src="assets/images/wallet/03.png" alt="wallet-img"> */}
                                     </a>
                                 </div>
                                 <div class="wallet-content">
@@ -143,7 +140,7 @@ const loginwithmetamask = () => {
                                 <div class="wallet-thumb">
                                     <a href="signin.html">
                                         <img src={require('../images/wallet/04.png').default} alt="" />
-                                    
+                                        {/* <img src="assets/images/wallet/04.png" alt="wallet-img"> */}
                                     </a>
                                 </div>
                                 <div class="wallet-content">
@@ -159,7 +156,7 @@ const loginwithmetamask = () => {
                                 <div class="wallet-thumb">
                                     <a href="signin.html">
                                         <img src={require('../images/wallet/05.png').default} alt="" />
-                                    
+                                        {/* <img src="assets/images/wallet/05.png" alt="wallet-img"> */}
                                     </a>
                                 </div>
                                 <div class="wallet-content">
@@ -168,7 +165,7 @@ const loginwithmetamask = () => {
                                 </div>
                             </div>
                         </div>
-                    </div> */}
+                    </div>
                 </div>
                 <p class="mt-5 mb-0 wallet-notice"><span class="me-1 theme-color"><i
                             class="icofont-bulb-alt"></i></span> We

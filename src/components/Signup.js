@@ -3,7 +3,7 @@ import { useMoralis } from "react-moralis";
 import React,{useState} from "react";
 import { formValidation } from '../_services';
 const Signup = () => {
-    const { signup, isAuthenticated, user } = useMoralis();
+    const { signup, isAuthenticated, user, authError} = useMoralis();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [cpassword, setCPassword] = useState("");
@@ -16,17 +16,20 @@ const Signup = () => {
         cpassword:"",
         formIsValid:false,
     }
+    if( isAuthenticated)
+    window.location.href="/"
     const mysignup=()=>{
-    let params = { username:username, email:email,password:password, cpassword:cpassword}
-    let validate = formValidation.Register_validation(params,errors);
-    if(validate.formIsValid){
-    signup(username, password, email).then((response) => {
-      window.location.href="/"
-    }).catch((error) => {
-     });
-    }else{
-    setErr(validate)
-    }
+        let params = { username:username, email:email,password:password, cpassword:cpassword}
+        let validate = formValidation.loginvalidation(params,errors);
+        if(validate.formIsValid){
+            signup(username, password, email);
+            // signup(username, password, email).then((response) => {
+            //     window.location.href="/"
+            //     }).catch((error) => {
+            // });
+        }else{
+            setErr(validate)
+        }
     }
     return(
         <>
@@ -54,6 +57,7 @@ const Signup = () => {
                 <div class="col-lg-5">
                     <div class="account-wrapper">
                         <h3 class="title">Sign Up</h3>
+                        {authError && (<span className="errors">{authError.message}</span>)}
                         <form class="account-form">
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="userIdInput" placeholder="user-id"  onChange={(e)=>setUsername(e.target.value)}/>

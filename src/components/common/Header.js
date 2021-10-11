@@ -1,12 +1,30 @@
 import React from 'react';
-import {Dropdown} from 'react-bootstrap';
+import {Button, Dropdown, Modal, Nav} from 'react-bootstrap';
 import { useMoralis } from "react-moralis";
 import { Link } from 'react-router-dom';
 function Header()
 {
 
-    const { authenticate, isAuthenticated, user,logout,isAuthenticating } = useMoralis();
+    const {  authenticate,isAuthenticated, user,logout,isAuthenticating,Moralis } = useMoralis();
+    React.useEffect(() => {
+        if(isAuthenticated){
+            console.log("--------------------------",user.get("firstname"))
+            if(user.get("name") == undefined){
+                console.log("open modal");
+            }
+        }
+
+    }, []);
+    // const loginwithmetamask = () => {
+    //     // enableWeb3()
+    //     Moralis.authenticate().then(function (user) { 
+          
+    //     })
+    // }
+
+
     // console.log(user.get)
+    
     return (
         <>
  
@@ -16,7 +34,7 @@ function Header()
             <div className="header__content">
                 <div className="header__logo">
                     <a href="/">
-                        <img src={require('../../images/logo/cbfinft-logo.png').default} alt="" />
+                        <img src={require('../../images/logo/NFTIAN.png').default} alt="" />
                     </a>
                 </div>
 
@@ -60,8 +78,10 @@ function Header()
                         </li>
                         
 
-                        <li className="header__nav-item">
-                            <Dropdown>
+                        <li className="header__nav-item">   <a href="/blog" className="header__nav-link">Blog</a>
+                        
+
+                            {/* <Dropdown>
                                 <Dropdown.Toggle variant="unset" id="dropdown-basic" className="header__nav-link">
                                     Blog
                                 </Dropdown.Toggle>
@@ -70,10 +90,10 @@ function Header()
                                     <Dropdown.Item href="/blog">Blog 1</Dropdown.Item>
                                     <Dropdown.Item href="/blog1">Blog 2</Dropdown.Item>
                                 </Dropdown.Menu>
-                            </Dropdown>
+                            </Dropdown> */}
                         </li>
                         
-                        <li className="header__nav-item">
+                        {/* <li className="header__nav-item">
                             <Dropdown>
                                 <Dropdown.Toggle variant="unset" id="dropdown-basic" className="header__nav-link">
                                 Pages
@@ -84,14 +104,14 @@ function Header()
                                     <Dropdown.Item href="/all-author">ALL Authors</Dropdown.Item>
                                     <Dropdown.Item href="/author">Author Profile</Dropdown.Item>
                                     <Dropdown.Item href="/wallet">Wallet Connect</Dropdown.Item>
-                                    {/* <Dropdown.Item href="404.html">404</Dropdown.Item> */}
+                                   
                                     <Dropdown.Item href="/forget-password">Forgot Password</Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
-                        </li>
+                        </li> */}
 
                         
-
+{/* 
                         <li className="header__nav-item">
                             <a className="header__nav-link" href="#" role="button" data-bs-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false" data-bs-offset="0,10"><svg
@@ -104,7 +124,7 @@ function Header()
                                 <li><a className="drop-down-item" href="contact.html">Contact </a></li>
                                 <li><a className="drop-down-item" href="coming-soon.html">Coming soon</a></li>
                             </ul>
-                        </li>
+                        </li> */}
                     </ul>
                 </div>
 
@@ -152,7 +172,7 @@ function Header()
                         </div>
                     </div>
                    
-                    <div className="dropdown-item" onClick={() => logout()} disabled={isAuthenticating}>
+                    <div className="dropdown-item header__action-btn" onClick={() => logout()} disabled={isAuthenticating}>
                             Sign
                                         Out <span className="ms-1"><i className="icofont-logout"></i></span></div>
                 
@@ -161,8 +181,9 @@ function Header()
                                 className="d-none d-md-inline">234.98ETH</span> </a>
                     </div>
                     </>
-                    ):(<Link className="dropdown-item" to="/signin">
-                   Login <span className="ms-1"><i className="icofont-login"></i></span></Link>)}
+                    ):(<>   <div className="dropdown-item" onClick={() => authenticate()} >
+                     Connect with metamask <span className="ms-1"></span></div><Link className="dropdown-item" to="/signin">
+                   Login <span className="ms-1"><i className="icofont-login"></i></span></Link></>)}
 
                 </div>
 
@@ -174,8 +195,61 @@ function Header()
             </div>
         </div>
         <pre>
-      {JSON.stringify(user)}
+      {/* {JSON.stringify(user)} */}
     </pre>
+
+    {/* <Modal show={false} 
+      size="md"
+      aria-labelledby="contained-modal-title-vcenter"
+      centered className="loader-modal">
+        <Modal.Body className="text-center py-0">
+            <h3>Create Profile</h3>
+            <form class="account-form">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="userIdInput" placeholder="user-id"  onChange={(e)=>setUsername(e.target.value)}/>
+                                <label for="userIdInput">User ID</label>
+                                {ERR?(<span className="errors">{ERR.username}</span>):(<></>)}
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="email" class="form-control" id="floatingInput"
+                                    placeholder="name@example.com" onChange={(e)=>setEmail(e.target.value)}/>
+                                <label for="floatingInput">Email address</label>
+                                {ERR?(<span className="errors">{ERR.email}</span>):(<></>)}
+
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="password" class="form-control" id="floatingPassword"
+                                    placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
+                                <label for="floatingPassword" >Password</label>
+                                {ERR?(<span className="errors">{ERR.password}</span>):(<></>)}
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="password" class="form-control" id="confirmPass"
+                                    placeholder="Confirm Password" onChange={(e)=>setCPassword(e.target.value)}/>
+                                <label for="confirmPass">Confirm Password</label>
+                                {ERR?(<span className="errors">{ERR.cpassword}</span>):(<></>)}
+                            </div>
+                            <div class="form-group">
+                                <div class="d-flex justify-content-between flex-wrap pt-sm-2">
+                                    <div class="checkgroup">
+                                        <input type="checkbox" name="remember" id="remember" />
+                                        <label for="remember">Remember Me</label>
+                                    </div>
+                                    <a href="forgot-pass.html">Forgot Password?</a>
+                                </div>
+                            </div>
+                            <div class="form-group">
+
+     <span  class="d-block default-btn move-top" onClick={() => mysignup(username, password, email)}>Signups Now</span>
+                               
+                            </div>
+                        </form>
+                        <button onClick={() => signup(username, password, email)}>Sign up</button>
+
+
+        </Modal.Body>
+      </Modal> */}
+
     </header>
         </>
     )

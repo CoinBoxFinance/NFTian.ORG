@@ -5,10 +5,11 @@ import './style/icofont.min.css';
 import './style/style.min.css';
 import Login from './components/Login';
 // import './style/.css';
-
+import Dark_create from './components/Dark_create'
 import Home from './components/Home';
 import Homeone from './components/Homeone';
 import Explore from './components/Explore';
+import old from './components/Authorold';
 
 import Author from './components/Author';
 import {BrowserRouter as Router,Switch,Route} from "react-router-dom";
@@ -54,6 +55,7 @@ function App() {
         <Route exact={true} path="/all-author" component={() => <WithHeader>{<Allauthor/>}</WithHeader>} />
         <Route exact={true} path="/forget-password" component={() => <WithHeader>{<Forgetpswd/>}</WithHeader>} />
         <Route exact={true} path="/item-details" component={() => <WithHeader>{<Itemdetails/>}</WithHeader>} />
+        <Route exact={true} path="/old" component={() => <WithHeader>{<old/>}</WithHeader>} />
         
       </Switch>
       {/* <Footer /> */}

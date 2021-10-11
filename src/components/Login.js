@@ -3,20 +3,16 @@ import { Link } from 'react-router-dom';
 import React,{useState} from "react";
 import { formValidation } from '../_services';
 const Login = () =>{
-    const { login,authenticate,enableWeb3, isAuthenticated, user, authError, userError} = useMoralis();
+    const { login,authenticate,enableWeb3 } = useMoralis();
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [ERR, setERR] = useState("");
     const errors = {
         email: "",
-        password:"",
-        formIsValid:false,
-    };
-    if(isAuthenticated){
-        window.location.href = "/wallet";
-        //console.log( user);
-    }
+       password:"",
+       formIsValid:false,
+     };
     const weblogin=()=>{
         let params = {
             email:username,
@@ -24,17 +20,16 @@ const Login = () =>{
         }
         let validate = formValidation.loginvalidation(params,errors);
 		if(validate.formIsValid){
-            // login(username, password).then((response) => {
-            //     return;
-            //     window.location.href = "/wallet";
-            //     console.log(response)
-            // }).catch((error) => {
-            // });
-            login(username, password);
-        }else{
-            console.log(validate)
-            setERR(validate)
-        }
+        login(username, password).then((response) => {
+          window.location.href = "/wallet";
+        console.log(response)
+        }).catch((error) => {
+            
+              });
+            }else{
+                console.log(validate)
+                setERR(validate)
+            }
     }
     return( 
         <>
@@ -44,7 +39,6 @@ const Login = () =>{
                             <div class="col-lg-5">
                                 <div class="account-wrapper">
                                     <h3 class="title">Sign In</h3>
-                                    {authError && (<span className="errors"> {authError.message} </span>)}
                                     <form class="account-form">
                                         <div class="form-floating mb-3">
                                             <input type="email" class="form-control" id="floatingInput"

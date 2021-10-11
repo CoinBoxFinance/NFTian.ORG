@@ -112,8 +112,8 @@ const Blog = () => {
                                         <div class="right">
                                             <a href="#" class="blog-heart"><i class="icofont-heart-alt"></i> {blog.upvotes} <span
                                                     class="d-none d-sm-inline-block">Like</span> </a>
-                                            <a href="#" class="blog-comment"><i class="icofont-comment"></i> 24
-                                                <span class="d-none d-sm-inline-block">Comments</span> </a>
+                                            {/* <a href="#" class="blog-comment"><i class="icofont-comment"></i> 24
+                                                <span class="d-none d-sm-inline-block">Comments</span> </a> */}
                                         </div>
                                     </div>
                                 </div>
@@ -141,7 +141,8 @@ const Blog = () => {
                             </ul>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-12">
+
+                    {/* <div class="col-lg-3 col-12">
                         <aside>
                             <div class="profile-widget search-widget">
                                 <div class="widget-inner">
@@ -204,8 +205,7 @@ const Blog = () => {
                                         <div class="post-thumb">
                                             <a href="Blog1">
                                                 <img src={require('../images/blog/01.jpg').default} alt="post-img" />
-                                                { /*<img src="assets/images/blog/01.jpg"
-                                                    alt="post-img">*/ }
+                                                
                                             </a>
                                         </div>
                                         <div class="post-content">
@@ -219,8 +219,7 @@ const Blog = () => {
                                         <div class="post-thumb">
                                             <a href="Blog1">
                                                 <img src={require('../images/blog/02.jpg').default} alt="post-img" />
-                                                { /*<img src="assets/images/blog/02.jpg"
-                                                    alt="post-img">*/ }
+                                                
                                             </a>
                                         </div>
                                         <div class="post-content">
@@ -234,8 +233,7 @@ const Blog = () => {
                                         <div class="post-thumb">
                                             <a href="Blog1">
                                                 <img src={require('../images/blog/03.jpg').default} alt="post-img" />
-                                                { /*<img src="assets/images/blog/03.jpg"
-                                                    alt="post-img">*/ }
+                                                
                                             </a>
                                         </div>
                                         <div class="post-content">
@@ -294,7 +292,7 @@ const Blog = () => {
                                 </ul>
                             </div>
                         </aside>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

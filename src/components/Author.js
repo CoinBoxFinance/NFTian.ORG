@@ -1,24 +1,667 @@
-import { Dropdown} from "react-bootstrap";
+import { Button, Dropdown, Modal, Nav} from "react-bootstrap";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import { useMoralis } from "react-moralis";
+import { useMoralis,useMoralisFile } from "react-moralis";
+import axios from 'axios';  
 import 'react-tabs/style/react-tabs.css';
 import React,{useState} from "react";
-import {tokenContractAbi,marketplaceContractAbi} from "./abi";
+import {tokenContractAbi,nftAbi,marketAbi} from "./abi";
+import { formValidation } from '../_services';
+import NFT from '../artifacts/contracts/NFT.sol/NFT.json'
+import Market from '../artifacts/contracts/Market.sol/NFTMarket.json'
+import { ethers } from 'ethers'
+import {
+    nftaddress, nftmarketaddress
+  } from './config'
+  import DatePicker from "react-datepicker";
+  import "react-datepicker/dist/react-datepicker.css";
 const Author = () => {
-    const { web3, enableWeb3, isWeb3Enabled, isWeb3EnableLoading, web3EnableError } = useMoralis()
+    const { web3, enableWeb3,user,Moralis } = useMoralis()
     const [tokenContractAddress, settokenContractAddress] = React.useState();
+    const [marketContractAddress, setMarketContractAddress] = React.useState();
+    const [imageFile, setimageFile] = React.useState();
+    const [imageFileshow, setimageFileshow] = React.useState();
+    const [name, setname] = React.useState('');
+    const [price, setprice] = React.useState();
+    const [description, setdescription] = React.useState();
+    const [selectedcat, setselectedcat] = React.useState('Art');
+    const [myitems, setMyitems] = React.useState();
+    const [ERR, setErrs] = React.useState();
+    const [currentUserAddress, setusrAddress] = React.useState();
+    const [message1, setmessage1] = React.useState('');
+    const [message2, setmessage2] = React.useState('');
+    const [marketItems,setMarketitems] = React.useState([]);
+    const [myNftitems,setMyNftitems] = React.useState([]);
+    const [nftType , setNftType] = React.useState("fixed_price");
+    
+    const [show, setShow] = useState(false);
+
+    const [nameAuction, setNameAuction] = React.useState('');
+    const [descriptionAuction, setDescriptionAuction] = React.useState('');
+    const [minBid, setMinBid] = React.useState('');
+    const [startDate , setStartDate] = React.useState(new Date());
+    const [endDate , setEndDate] = React.useState('');
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+    const TOKEN_CONTRACT_ADDRESS = "0x16e2715443373a907416206D80eA42e424Fd683f";
+
+     const formerrors = {
+         name:"",
+         image:"",
+         description:"",
+         price:"",
+         formIsValid:false,
+
+     }
+      let Categories = ["Art"," Trading Cards","Gaming","Music","Tweets"," Rare Item","Collectibles","NFT Gifts"];
+        let icons = ["icofont-vector-path"," icofont-penalty-card","icofont-ui-game","icofont-music-disk","icofont-twitter","icofont-bill",
+        " icofont-box","icofont-gift"];
+            
+      let Cat = []
+      if(Categories){
+          Cat =  Categories.map(function(c, index){
+              let classname = "item-cat-btn"
+              if(c == selectedcat){
+                // alert(c+"=="+ selectedcat)
+                classname= "item-cat-btn active"
+              }
+          return(<li class={
+            classname
+          }
+onClick={()=>selectcat(c)} id={c}>
+          <span><i class={icons[index]}></i></span>
+          {c}
+      </li>)
+      
+          })
+         } 
+
+const selectcat = (c)=>{
+    // const currentClass = document.getElementsByClassName("item-cat-btn");
+    // for (let i = 0; i < currentClass.length; i++) {
+    //   currentClass[i].classList.toggle("active");
+    //   console.log(currentClass[i]);
+    // }
+    setselectedcat(c)   
+}
+    function checkfile(file_img){
+		var get_ext = file_img.name.split('.');
+		
+		 var exts = ['png','jpg','jpeg','gif'];
+		  get_ext = get_ext.reverse();
+		 
+		  var a = exts.indexOf(get_ext[0].toLowerCase());
+		
+		  if (a > -1 ){
+		// alert( 'Allowed extension!' );
+		  return true;
+		  } else {
+	   
+			// setprofileERR("Please select a valid image file")
+		   return false;
+		  }
+		}
+
+
+function date_diff_from_now(date_future_time_stamp){
+    let date_future = date_future_time_stamp*1000;
+// get total seconds between the times
+let date_now = new Date();
+var delta = Math.abs(date_future - date_now) / 1000;
+
+// calculate (and subtract) whole days
+var days = Math.floor(delta / 86400);
+delta -= days * 86400;
+
+// calculate (and subtract) whole hours
+var hours = Math.floor(delta / 3600) % 24;
+delta -= hours * 3600;
+
+// calculate (and subtract) whole minutes
+var minutes = Math.floor(delta / 60) % 60;
+delta -= minutes * 60;
+
+    // what's left is seconds
+    var seconds = delta % 60;  // in theory the modulus is not required
+    let hsh = {};
+    hsh.days = days;
+    hsh.hours = hours;
+    hsh.minutes = minutes;
+    hsh.seconds = Math.floor(seconds);
+    return hsh;
+
+}
+
+	function readURL(input) {
+		//
+		if (input.files && input.files[0]) {
+		  var filetype = checkfile(input.files[0]);
+		   if(filetype===true){
+               setimageFile(input.files[0])
+	
+            var reader = new FileReader();
+			reader.onload = function(e) {
+				setimageFileshow(e.target.result)
+			  }
+			reader.readAsDataURL(input.files[0]);
+			//console.log(formData)
+		  }
+		}
+		// openModalcrop()
+	}
 //create item 
-const TOKEN_CONTRACT_ADDRESS = "0xAdD3D936A8EC1A4969bA73e19815cad2B7CDb086";
+
 React.useEffect(() => {
 
+    console.log("------------------------999999999999999",ethers.utils.parseEther("1.0"))
     init();
+    
+    //  getitems()
   }, []);
-  const init = () => {
-    enableWeb3()
-    const tokenContract = new web3.eth.Contract(tokenContractAbi, TOKEN_CONTRACT_ADDRESS);
+//   const init = () => {
+//     enableWeb3()
+   
+//     console.log(tokenContractAbi,"===tokenContractAbi")
+//     console.log("-----tokenContract",TOKEN_CONTRACT_ADDRESS)
+//     const tokenContract = new web3.eth.Contract(tokenContractAbi, TOKEN_CONTRACT_ADDRESS);
+  
+//     settokenContractAddress(tokenContract)
+  
+//   }
+
+const init = async () => {
+    // hideElement(userItemsSection);
+  
+  const web3 = await Moralis.Web3.enable();
+  console.log("abiiii",tokenContractAbi)
+  const tokenContract = new web3.eth.Contract(nftAbi, nftaddress);
+  const marketContract = new web3.eth.Contract(marketAbi,nftmarketaddress)
+  var  user = await Moralis.User.current();
+  
+  const userAddress = user.get('ethAddress');
+  setusrAddress(userAddress)
+  settokenContractAddress(tokenContract)
+  setMarketContractAddress(marketContract);
+
+ loadNFTs(tokenContract,marketContract)
+ loadMyNfts(tokenContract,marketContract)
+//  fetchMyNFTs
+
+}
+
+  const createItem = async () => {
+    let params,validate;
+    if(nftType == "fixed_price"){
+        params = { name:name, image:imageFile,description:description, price:price }
+        validate = formValidation.item_validation(params,formerrors);
+    }else{
+        
+        params = { name:nameAuction, image:imageFile,description:descriptionAuction }
+        console.log("description auction",descriptionAuction);
+        validate = formValidation.item_validation_auction(params,formerrors);
+    }
+    console.log("params")
+console.log("validate",validate);
+    if(validate.formIsValid){
+    var attributes = [{
+        "trait_type" : "Category",
+        "value" : selectedcat,
+    },
+    {
+        "trait_type" : "Price",
+        "value" : price,
+    }
+]
+console.log("imaged going to saved");
+     const nftFile = new Moralis.File("nftFile.jpg",imageFile);
+     await nftFile.saveIPFS();
+    console.log("imaged saved");
+const nftFilePath = nftFile.ipfs();
+//  const nftFile = saveFile("nftFile.jpeg", imageFile.files[0], { saveIPFS: true });
+   
+//    const  nftFilePath = nftFile.ipfs
+
+    const metadata = {
+        name: params.name,
+        description: params.description,
+        image: nftFilePath,
+        attribute:attributes
+
+    };
+
+    // const  nftFileMetadataFile = saveFile("metadata.json", {base64 : btoa(JSON.stringify(metadata))}, { saveIPFS: true });
+ const nftFileMetadataFile = new Moralis.File("metadata.json", {base64 : btoa(JSON.stringify(metadata))});
+     await nftFileMetadataFile.saveIPFS()
+
+     const nftFileMetadataFilePath = nftFileMetadataFile.ipfs();
+     console.log(nftFileMetadataFilePath)
+
+    const nftId = await mintNft(nftFileMetadataFilePath);
+
+
+}else{
+    setErrs(validate)  
+}
+}
+
+
+const clearfields = () =>{
+    setname('')
+    setdescription('')
+    setprice('')
+    setimageFile('')
+    setselectedcat("Art")
+    setimageFileshow()
+}
+
+
+
+  const mintNft = async (metadataUrl) => {
+    var  user = await Moralis.User.current();
+    const userAddress = user.get('ethAddress');
+    console.log(userAddress)
+    console.log(tokenContractAddress)
+ await tokenContractAddress.methods.createToken(metadataUrl).send({from: userAddress}) 
+.on("transactionHash", function (hash) {
+    handleShow()
+    setmessage1("Initiating")
+    setmessage2("Waiting for reciept.")
+    console.log("Hash",hash);
+})
+.on("receipt", function (tx) {
+    console.log("receipt mint",tx);
+
+let tokenId = tx.events.Transfer.returnValues.tokenId;
+    setmessage1("Got reciept!!")
+    // setmessage2("waiting for confirmation!!")
+    setmessage2("Adding to markerplace");
+    addToMarket(tokenId);
+//    console.log("receipt",receipt);
+})
+.on("confirmation", function (conf) {
+    console.log("confirmedddd mint",conf);
+    setmessage1("")
+    setmessage2("Confirmed!!")
+    
+    // setTimeout(() => {
+    //     clearfields()
+    //     handleClose()
+    // }, 5000);
+  
+})
+.on("error", async function (error) {
+    console.log("Error",error);
+});
+
+    // return receipt.events.Transfer.returnValues.tokenId;
+}
+
+
+const addToMarket = async (tokenId) => {
+    console.log("start addming market");
+    var  user = await Moralis.User.current();
+    const userAddress = user.get('ethAddress');
+    console.log(userAddress)
+    console.log(tokenContractAddress)
+    console.log("get price",price);
+    var tmp_listing_price = ethers.utils.parseUnits("0.025", 'ether');
+    if (nftType == "fixed_price"){
+    let price_eth = ethers.utils.parseUnits(price, 'ether')
+    console.log("price_eth",price_eth);
+
+    
+    
+
+        await marketContractAddress.methods.createMarketItem(nftaddress, tokenId, price_eth).send({from: userAddress , value: tmp_listing_price })
+        .on("transactionHash", function (hash) {
+            handleShow()
+            setmessage1("Initiating")
+            setmessage2("Waiting for reciept.")
+            console.log("Hash",hash);
+        })
+        .on("receipt", function (tx) {
+            console.log("receipt market",tx);
+            setmessage1("Got reciept!!")
+            setmessage2("waiting for confirmation!!")
+            setTimeout(() => {
+                console.log("timeouttttt");
+                clearfields()
+                handleClose()
+            }, 5000);
+        })
+        .on("confirmation", function (conf) {
+            console.log("confirmedddd market",conf);
+            setmessage1("")
+            setmessage2("Confirmed!!")
+        
+        })
+        .on("error", async function (error) {
+            console.log("Error market",error);
+        });
+    }else{
+       let price_eth = ethers.utils.parseUnits("1", 'ether')
+        console.log("price_eth",price_eth);
+    console.log("creating sale auctionnnn");
+
+    let start_date_send = startDate.getTime();
+    let start_date_sendTimestamp = Math.floor(start_date_send / 1000);
+    let end_date_send = endDate.getTime();
+    let end_date_sendTimestamp = Math.floor( end_date_send / 1000);
+console.log("start_date_sendTimestamp",start_date_sendTimestamp);
+console.log("end_date_sendTimestamp",end_date_sendTimestamp);
+
+        await marketContractAddress.methods.createMarketItemAuction(nftaddress, tokenId, price_eth ,start_date_sendTimestamp , end_date_sendTimestamp ).send({from: userAddress , value: tmp_listing_price })
+        .on("transactionHash", function (hash) {
+            handleShow()
+            setmessage1("Initiating")
+            setmessage2("Waiting for reciept.")
+            console.log("Hash",hash);
+        })
+        .on("receipt", function (tx) {
+            console.log("receipt market",tx);
+            setmessage1("Got reciept!!")
+            setmessage2("waiting for confirmation!!")
+            setTimeout(() => {
+                console.log("timeouttttt");
+                clearfields()
+                handleClose()
+            }, 5000);
+        })
+        .on("confirmation", function (conf) {
+            console.log("confirmedddd market",conf);
+            setmessage1("")
+            setmessage2("Confirmed!!")
+        
+        })
+        .on("error", async function (error) {
+            console.log("Error market",error);
+        });
+
+
+    }
+
+
+
+    // return receipt.events.Transfer.returnValues.tokenId;
+}
+
+
+//creted listing
+const getitems = () => {
+    
+
+    const userAddress = currentUserAddress;
+    // const token = "0xAdD3D936A8EC1A4969bA73e19815cad2B7CDb086";
+    // alert(userAddress)
+    let url =  `https://deep-index.moralis.io/api/v2/`+userAddress+`/nft/`+TOKEN_CONTRACT_ADDRESS+`?chain=rinkeby&format=decimal`;
+    const headers = {  headers: {"X-API-Key": "3Ur7Kdm9AtnEnIt6haF5rEFGy2gzRFRUwVI4HxtYCJJq38su3dxYEsHpxk1v5Lip"} }
+      axios.get(url,headers).then(function (response) {
+        setMyitems(response.data.result)
+    }).catch(error => {
+    });
+    // loadNFTs()
+
+
+   }
+
+   async function loadNFTs(tokenContract,marketContract) {
+    // const web3Modal = new Web3Modal()
+    // const connection = await web3Modal.connect()
+
+    // const provider = new ethers.providers.Web3Provider(connection)    
+    // const signer = provider.getSigner()
+
+    // let contract = new ethers.Contract(nftaddress, NFT.abi, signer)
+
+
+    // const tokenContract = new ethers.Contract(nftaddress, NFT.abi, provider)
+    // // const marketContract = new ethers.Contract(nftmarketaddress, Market.abi, provider)
+    // const marketContract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
+    console.log("marketContract",marketContract)
+    const fetch_market_items = await marketContract.methods.fetchMarketItems().call()
+    console.log("dataaaaaaaa market contract address",fetch_market_items);
+    /*
+    *  map over items returned from smart contract and format 
+    *  them as well as fetch their token metadata
+    */
+    const items = await Promise.all(fetch_market_items.map(async i => {
+      const tokenUri = await tokenContract.methods.tokenURI(i.tokenId).call()
+        
+      //   const tokenUri = 1;
+      const meta = await axios.get(tokenUri)
+    //   debugger
+      let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
+      let item = {
+        price,
+        tokenId: parseInt(i.tokenId),
+        seller: i.seller,
+        owner: i.owner,
+        image: meta.data.image,
+        name: meta.data.name,
+        description: meta.data.description,
+        startingTime: i.startingTime,
+        is_auction: i.is_auction,
+        endTime: i.endTime
+      }
+      return item
+    }))
+    console.log("itemsssssssss 1",items);
+    // setNfts(items)
+    setMarketitems(items);
+    // setLoadingState('loaded') 
   }
+
+
+
+   async function loadMyNfts(tokenContract,marketContract) {
+    console.log("marketContract",marketContract)
+    const fetch_market_items = await marketContract.methods.fetchMyNFTs().call()
+    console.log("dataaaaaaaa loadMyNfts",fetch_market_items);
+    /*
+    *  map over items returned from smart contract and format 
+    *  them as well as fetch their token metadata
+    */
+    const items = await Promise.all(fetch_market_items.map(async i => {
+      const tokenUri = await tokenContract.methods.tokenURI(i.tokenId).call()
+        
+      //   const tokenUri = 1;
+      const meta = await axios.get(tokenUri)
+    //   debugger
+      let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
+      let item = {
+        price,
+        tokenId: parseInt(i.tokenId),
+        seller: i.seller,
+        owner: i.owner,
+        image: meta.data.image,
+        name: meta.data.name,
+        description: meta.data.description,
+      }
+      return item
+    }))
+    console.log("itemsssssssss",items);
+    // setNfts(items)
+    setMyNftitems(items);
+    // setLoadingState('loaded') 
+  }
+
+
+//   bidNft
+
+async function bidNft(nft) {
+    console.log("nft bidNft",nft);
+  /* needs the user to sign the transaction, so will use Web3Provider and sign it */
+  // const web3Modal = new Web3Modal()
+  // const connection = await web3Modal.connect()
+  // const provider = new ethers.providers.Web3Provider(connection)
+  // const signer = provider.getSigner()
+  // const contract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
+  
+  // /* user will be prompted to pay the asking proces to complete the transaction */
+  // const price = ethers.utils.parseUnits(nft.price.toString(), 'ether')   
+  // const transaction = await contract.createMarketSale(nftaddress, nft.tokenId, {
+  //   value: price
+  // })
+  // await transaction.wait()
+  // loadNFTs()
+  try {
+
+      handleShow()
+      setmessage1("Initiating")
+      setmessage2("Waiting for approval.")
+      const price_buy = ethers.utils.parseUnits(nft.price.toString(), 'ether')
+      console.log("price",price_buy);
+      console.log("nftaddress",nftaddress);
+      console.log("nft.tokenId",nft.tokenId);
+
+       await marketContractAddress.methods.createMarketSale(nftaddress, nft.tokenId).send({from: currentUserAddress , value: price_buy })
+       setmessage2("successfully bid");
+       setTimeout(() => {
+          console.log("timeouttttt");
+          handleClose()
+      }, 2000);
+    } catch (error) {
+      alert("something went wrong")
+      window.location.reload();
+    }
+
+
+}
+
+
+  async function buyNft(nft) {
+      console.log("nft buy",nft);
+    /* needs the user to sign the transaction, so will use Web3Provider and sign it */
+    // const web3Modal = new Web3Modal()
+    // const connection = await web3Modal.connect()
+    // const provider = new ethers.providers.Web3Provider(connection)
+    // const signer = provider.getSigner()
+    // const contract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
+    
+    // /* user will be prompted to pay the asking proces to complete the transaction */
+    // const price = ethers.utils.parseUnits(nft.price.toString(), 'ether')   
+    // const transaction = await contract.createMarketSale(nftaddress, nft.tokenId, {
+    //   value: price
+    // })
+    // await transaction.wait()
+    // loadNFTs()
+    try {
+
+        handleShow()
+        setmessage1("Initiating")
+        setmessage2("Waiting for approval.")
+        const price_buy = ethers.utils.parseUnits(nft.price.toString(), 'ether')
+        console.log("price",price_buy);
+        console.log("nftaddress",nftaddress);
+        console.log("nft.tokenId",nft.tokenId);
+        
+         await marketContractAddress.methods.createMarketSale(nftaddress, nft.tokenId).send({from: currentUserAddress , value: price_buy })
+         setmessage2("successfully transferred to account")
+         setTimeout(() => {
+            console.log("timeouttttt");
+            handleClose()
+        }, 2000);
+      } catch (error) {
+        alert("something went wrong")
+        window.location.reload();
+      }
+
+
+  }
+
+
+
+
+
+   let createdItems = []
+   if(myitems){
+       createdItems = myitems.map(function(item,index){
+        let itemdata  = JSON.parse(item.metadata);
+      
+    if(itemdata){
+        let attri = []
+        attri  = itemdata.attribute.map(function(item1,index){
+            return(<><p>{item1.trait_type}:
+                <span
+                    class="yellow-color">{item1.value}
+                   {item1.trait_type=="Category"?(<></>):(<>ETH</>)} </span>
+            </p><br></br></>)
+                })
+           return (  <div class="col-lg-4 col-sm-6">
+           <div class="nft-item">
+               <div class="nft-inner">
+                   
+                   <div class="nft-item-top d-flex justify-content-between align-items-center">
+                       <div class="author-part">
+                           <ul class="author-list d-flex">
+                            
+                               <li
+                                   class="single-author d-flex align-items-center">
+                                  
+                                   <h6><a href="/author">{currentUserAddress}</a>
+                                   </h6>
+                               </li>
+                           </ul>
+                       </div>
+                       <div class="more-part">
+                           <div class=" dropstart">
+                               <a class=" dropdown-toggle"
+                                   href="#" role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false"
+                                   data-bs-offset="25,0">
+                                   <i
+                                       class="icofont-flikr"></i>
+                               </a>
+
+                               <ul class="dropdown-menu">
+                                   <li><a class="dropdown-item"
+                                           href="#"><span>
+                                               <i
+                                                   class="icofont-warning"></i>
+                                           </span> Report </a>
+                                   </li>
+                                   <li><a class="dropdown-item"
+                                           href="#"><span><i
+                                                   class="icofont-reply"></i></span>
+                                           Share</a></li>
+                               </ul>
+                           </div>
+                       </div>
+                   </div>
+                   
+                   <div class="nft-item-bottom">
+                       <div class="nft-thumb">
+                       {itemdata.image?(<img src={itemdata.image} alt="" />):(<img src={require('../images/nft-item/03.gif') .default} alt="" />)}
+                
+                         
+
+                       </div>
+                       <div class="nft-content">
+                          {itemdata.name?( <h4><a href="/nftdetails">{itemdata.name}</a> </h4>):(<></>)}
+                           <div
+                               class="price-like d-flex justify-content-between align-items-center">
+                                  
+                               {attri}
+
+
+                               {/* <a href="#" class="nft-like"><i
+                                       class="icofont-heart"></i>
+                                   230</a> */}
+                           </div>
+                       </div>
+                   </div>
+               </div>
+           </div>
+       </div>)
+    }
+      })
+   } 
+
     return(
         <>
+      
+     
       
     <section class="page-header-section style-1">
         <div class="container">
@@ -29,7 +672,9 @@ React.useEffect(() => {
                     </div>
                     <ol class="breadcrumb">
                         <li><a href="/">Home</a></li>
-                        <li class="active">Alex Joe</li>
+                        <li class="active">Alex Joew</li>
+                        
+
                     </ol>
                 </div>
             </div>
@@ -38,7 +683,6 @@ React.useEffect(() => {
   
 
 
-  
     <section class="profile-section padding-top padding-bottom">
         <div class="container">
             <div class="section-wrapper">
@@ -55,7 +699,7 @@ React.useEffect(() => {
                         </div>
                         <div class="profile-information">
                             <div class="profile-pic">
-                                <img src={require('..//images/profile/Profile.jpg').default} alt="" />
+                                <img src={require('../images/profile/pro.jpg').default} alt="" />
                                 {/* <img src="assets/images/profile/Profile.jpg" alt="DP"> */}
                                 <div class="custom-upload">
                                     <div class="file-btn">
@@ -73,7 +717,7 @@ React.useEffect(() => {
                             <ul class="profile-contact">
                                 <li class="crypto-copy">
                                     <div id="cryptoCode" class="crypto-page">
-                                        <input id="cryptoLink" value="0x731F9FBF4163D47B0F581DD9EC45C9" readonly />
+                                        <input id="cryptoLink" value={currentUserAddress} readonly />
                                         <div id="cryptoCopy" data-bs-toggle="tooltip" data-bs-placement="top"
                                             title="Copy Address">
                                             <span class="copy-icon">
@@ -157,23 +801,6 @@ React.useEffect(() => {
                     </div>
                     <div class="profile-details">
                        
-                                {/* <button class="nav-link active" id="nav-allNft-tab" data-bs-toggle="tab"
-                                    data-bs-target="#allNft" type="button" role="tab" aria-controls="allNft"
-                                    aria-selected="true">All NFT's</button>
-                                <button class="nav-link" id="nav-about-tab" data-bs-toggle="tab" data-bs-target="#about"
-                                    type="button" role="tab" aria-controls="about" aria-selected="false">About</button>
-                                <button class="nav-link" id="nav-activity-tab" data-bs-toggle="tab"
-                                    data-bs-target="#activity" type="button" role="tab" aria-controls="activity"
-                                    aria-selected="false">Activity</button>
-                                <button class="nav-link" id="nav-follower-tab" data-bs-toggle="tab"
-                                    data-bs-target="#follower" type="button" role="tab" aria-controls="follower"
-                                    aria-selected="false">Follower <span class="item-number">231</span></button>
-                                <button class="nav-link" id="nav-following-tab" data-bs-toggle="tab"
-                                    data-bs-target="#following" type="button" role="tab" aria-controls="following"
-                                    aria-selected="false">Following <span class="item-number">145</span></button>
-                                <button class="nav-link" id="nav-wallet-tab" data-bs-toggle="tab"
-                                    data-bs-target="#wallet" type="button" role="tab" aria-controls="wallet"
-                                    aria-selected="false">My Wallet</button> */}
                                 <Tabs>
                                 <nav class="profile-nav">
                             <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -199,48 +826,20 @@ React.useEffect(() => {
                                     </div>
                                     </nav>
                                
-                                {/* <div class="dropdown">
-                                    <a class="btn dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                                        aria-expanded="false">
-                                        Setting
-                                    </a>
-
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="/author">Profile</a></li>
-                                        <li><a class="dropdown-item" href="#">Privacy</a></li>
-                                        <li><a class="dropdown-item" href="#">Block user</a></li>
-                                    </ul>
-                                </div> */}
-                                {/* <Dropdown>
-                                    <Dropdown.Toggle variant="unset" id="dropdown-basic" className="header__nav-link">
-                                    Setting
-                                    </Dropdown.Toggle>
-
-                                    <Dropdown.Menu>
-                                        <Dropdown.Item href="/author">Profile</Dropdown.Item>
-                                        <Dropdown.Item href="#">Privacy</Dropdown.Item>
-                                        <Dropdown.Item href="/wallet">Block user</Dropdown.Item>
-                                    </Dropdown.Menu>
-                                </Dropdown> */}
-
-                            {/* </div>
-                        </nav> */}
-                        {/* <div class="tab-content" id="nav-tabContent">
-                           
-                            <div class="tab-pane activity-page fade show active" id="allNft" role="tabpanel"> */}
                             <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-9">
+                                        <div class="col-xl-12">
                                         <Tabs>
                                             <article>
                                                 <div class="activity-tab">
                                                     
                                                     <TabList className="nav nav-pills mb-30 px-2 ">
+ 
                                                         <Tab className="nav-link"><i class="icofont-flask"></i> Create NFT</Tab>
                                                         <Tab className="nav-link"><i class="icofont-flash"></i> On Sale</Tab>
                                                         <Tab className="nav-link"><i class="icofont-license"></i> owned</Tab>
-                                                        <Tab className="nav-link"><i class="icofont-puzzle"></i> Created</Tab>
+                                                        <Tab className="nav-link" onClick={getitems}><i class="icofont-puzzle"></i> Created</Tab>
                                                         <Tab className="nav-link"><i class="icofont-library"></i> Collection</Tab>
                                                         <Dropdown className="all-box-tab">
                                                             <Dropdown.Toggle variant="unset" id="dropdown-basic" className="header__nav-link">
@@ -256,232 +855,187 @@ React.useEffect(() => {
                                                         </Dropdown>
                                                     </TabList>
                                                    
-                                                    {/* <ul class="nav nav-pills mb-30 px-2" id="pills-tab" role="tablist">
-                                                        <li class="nav-item" role="presentation">
-                                                            <button class="nav-link" id="pills-personal-tab"
-                                                                data-bs-toggle="pill" data-bs-target="#pills-personal"
-                                                                type="button" role="tab" aria-controls="pills-personal"
-                                                                aria-selected="false">
-                                                                <i class="icofont-flask"></i>
-                                                                Create NFT</button>
-                                                        </li>
-                                                        <li class="nav-item" role="presentation">
-                                                            <button class="nav-link active" id="pills-mentions-tab"
-                                                                data-bs-toggle="pill" data-bs-target="#pills-mentions"
-                                                                type="button" role="tab" aria-controls="pills-mentions"
-                                                                aria-selected="true"><i class="icofont-flash"></i>
-                                                                On Sale</button>
-                                                        </li>
-                                                        <li class="nav-item" role="presentation">
-                                                            <button class="nav-link" id="pills-favorites-tab"
-                                                                data-bs-toggle="pill" data-bs-target="#pills-favorites"
-                                                                type="button" role="tab" aria-controls="pills-favorites"
-                                                                aria-selected="false"><i class="icofont-license"></i>
-                                                                owned</button>
-                                                        </li>
-                                                        <li class="nav-item" role="presentation">
-                                                            <button class="nav-link" id="pills-groups-tab"
-                                                                data-bs-toggle="pill" data-bs-target="#pills-groups"
-                                                                type="button" role="tab" aria-controls="pills-groups"
-                                                                aria-selected="false"><i class="icofont-puzzle"></i>
-                                                                Created</button>
-                                                        </li>
-                                                        <li class="nav-item" role="presentation">
-                                                            <button class="nav-link" id="pills-friends-tab"
-                                                                data-bs-toggle="pill" data-bs-target="#pills-friends"
-                                                                type="button" role="tab" aria-controls="pills-friends"
-                                                                aria-selected="false"><i class="icofont-library"></i>
-                                                                Collection</button>
-                                                        </li>
-
-                                                        <li class="custom-select">
-                                                            <select>
-                                                                <option value="1">All</option>
-                                                                <option value="2">Recent</option>
-                                                                <option value="3">Relevant</option>
-                                                                <option value="4">Popular</option>
-                                                            </select>
-                                                        </li>
-                                                    </ul> */}
-                                                    {/* <div class="tab-content activity-content" id="pills-tabContent">
-                                                        <div class="tab-pane fade" id="pills-personal" role="tabpanel"
-                                                            aria-labelledby="pills-personal-tab"> */}
+                                              
                                                         <TabPanel>
-                                                            <div class="row">
-                                                                <div class="col">
-                                                                    
-                                                                    <div class="create-nft py-5 px-4">
-                                                                        <form class="create-nft-form">
-                                                                            
-                                                                            <div class="upload-item mb-30">
-                                                                                <p>PNG,JPG,JPEG,SVG,WEBP,Mp3 & Mp4
-                                                                                    (Max-150mb)</p>
+                                                         
+                                                             <section className="form_section"> 
+                                                                <div className="container">
+                                                                    <div className="row">
+                                                                        <div className="col-md-8">
+                                                                            <h5 className="mb-2"> Upload file</h5>
+                                                                            <div class="upload-item mb-30 d-create-file1">
+                                                                                <p>PNG, JPG, GIF, WEBP or MP4. Max 200mb.</p>
                                                                                 <div class="custom-upload">
-                                                                                    <div class="file-btn"><i
-                                                                                            class="icofont-upload-alt"></i>
-                                                                                        Upload a file</div>
-                                                                                    <input type="file" />
+                                                                                
+                                                                                        <input type="button" id="get_file" class="btn-main" value="Browse" />
+                                                                                        <input type="file" onChange={ (e) => readURL(e.target) }/>
                                                                                 </div>
                                                                             </div>
-                                                                           
-                                                                            <div
-                                                                                class="form-floating item-name-field mb-3">
-                                                                                <input type="text" class="form-control"
-                                                                                    id="itemNameInput"
-                                                                                    placeholder="Item Name" />
-                                                                                <label for="itemNameInput">Item
-                                                                                    Name</label>
-                                                                            </div>
-                                                                            
-                                                                            <div
-                                                                                class="form-floating item-desc-field mb-30">
-                                                                                <textarea class="form-control"
+                                                                            {ERR?(<span className="errors">{ERR.image}</span>):(<></>)}
+                                                                            <div className="tab_create">
+                                                                                <h5 className="mb-2"> Select method</h5>
+                                                                                <Tabs>
+                                                                                    <TabList className="nav nav-pills mb-30 px-2 ">
+                                                                                        <Tab className="nav-link" onClick={() => setNftType("fixed_price")} >
+                                                                                            <span><i class="fa fa-tag"></i>Fixed price</span>
+                                                                                        </Tab>
+                                                                                        <Tab className="nav-link" onClick={() => setNftType("timed_auction")}>
+                                                                                            <span><i class="fa fa-hourglass-1"></i>Timed auction</span>
+                                                                                        </Tab>
+                                                                                        {/* <Tab className="nav-link">
+                                                                                        <span><i class="fa fa-users"></i>Open for bids</span>
+                                                                                        </Tab> */}
+                                                                                    </TabList>
+                                                                                    <TabPanel>
+                                                                                            <div>
+                                                                                                <div>
+                                                                                                    <h5>Price</h5>
+                                                                                                    <input type="text"  value={price} onChange={(e)=>setprice(e.target.value)} name="item_price" id="item_price" class="input100" placeholder="enter price for one item (ETH)" />
+                                                                                                    {ERR?(<span className="errors">{ERR.price}</span>):(<></>)}
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <h5>Title</h5>
+                                                                                                  
+                                                                                                    <input type="text" onChange={(e)=>setname(e.target.value)}  value={name} name="name" id="name" class="input100" placeholder="e.g. 'Crypto Funk" />
+                                                                                                    {ERR?(<span className="errors">{ERR.name}</span>):(<></>)}
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <h5>Description</h5>
+                                                                                                    <textarea class="form-control input100"
                                                                                     placeholder="Item Description"
-                                                                                    id="itemDesc"></textarea>
-                                                                                <label for="itemDesc">Item
-                                                                                    Description</label>
-                                                                            </div>
-                                                                           
-                                                                            <div class="item-category-field mb-30">
-                                                                                <h4>Select Item Catergory</h4>
-                                                                                <ul
-                                                                                    class="item-cat-list d-flex flex-wrap">
-                                                                                    <li class="item-cat-btn active">
-                                                                                        <span><i
-                                                                                                class="icofont-vector-path"></i></span>
-                                                                                        Art
-                                                                                    </li>
-                                                                                    <li class="item-cat-btn">
-                                                                                        <span><i
-                                                                                                class="icofont-penalty-card"></i></span>
-                                                                                        Trading Cards
-                                                                                    </li>
-                                                                                    <li class="item-cat-btn">
-                                                                                        <span><i
-                                                                                                class="icofont-ui-game"></i></span>
-                                                                                        Gaming
-                                                                                    </li>
-                                                                                    <li class="item-cat-btn">
-                                                                                        <span><i
-                                                                                                class="icofont-music-disk"></i></span>
-                                                                                        Music
-                                                                                    </li>
+                                                                                    id="itemDesc" onChange={ (e) => setdescription(e.target.value) }  value={description}></textarea>
+                                                                                       {ERR?(<span className="errors">{ERR.description}</span>):(<></>)}
+                                                                                                </div>
+                                                                                                <div class="item-category-field mb-30">
+                                                                                                    <h5 className="mb-3">Select Item Catergory</h5>
+                                                                                                    <ul
+                                                                                                        class="item-cat-list d-flex flex-wrap">
+                                                                                                    {Cat}
+                                                                                                    </ul>
+                                                                                                </div>
+                                                                                                {/* <div>
+                                                                                                    <h5>Royalties</h5>
+                                                                                                    <input type="text" name="item_price" id="item_price" class="input100" placeholder="suggested: 0, 10%, 20%, 30%. Maximum is 70%" />
+                                                                                                </div> */}
+                                                                                              
+                                                                                            </div>
+                                                                                        </TabPanel>
+                                                                                        <TabPanel>
+                                                                                            <div>
+                                                                                                {/* <div>
+                                                                                                    <h5>Minimum bid</h5>
+                                                                                                    <input type="text" name="item_price" id="item_price" class="input100" placeholder="enter minimum bid"  />
+                                                                                                </div> */}
+                                                                                                <div className="row">
+                                                                                                    <div class="col-md-6">
+                                                                                                        <h5>Starting date</h5>
+                                                                                                        <DatePicker minDate={new Date()} selected={startDate} onChange={(date) => setStartDate(date)} />
+                                                                                                        {/* <input  id="item_price" class="input100" placeholder="dd-mm-yyyy" onChange={ (e) => setStartDate(e.target.value) }  value={startDate} /> */}
+                                                                                                    </div>
+                                                                                                    <div class="col-md-6">
+                                                                                                        <h5>Expiration date</h5>
+                                                                                                        <DatePicker minDate={new Date()} selected={endDate} onChange={(date) => setEndDate(date)} />
+                                                                                                        {/* <input id="item_price" class="input100" onChange={ (e) => setEndDate(e.target.value) }  value={endDate} placeholder="dd-mm-yyyy" /> */}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <h5>Title</h5>
+                                                                                                    <input type="text" name="item_price" id="item_price" onChange={ (e) => setNameAuction(e.target.value) }  value={nameAuction} class="input100" placeholder="e.g. 'Crypto Funk" />
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <h5>Description</h5>
+                                                                                                    <input type="text" name="item_price" id="item_price" onChange={ (e) => setDescriptionAuction(e.target.value) }  value={descriptionAuction} class="input100" placeholder="e.g. 'This is very limited item'" />
+                                                                                                </div>
+                                                                                                {/* <div>
+                                                                                                    <h5>Royalties</h5>
+                                                                                                    <input type="text" name="item_price" id="item_price" class="input100" placeholder="suggested: 0, 10%, 20%, 30%. Maximum is 70%" />
+                                                                                                </div> */}
+                                                                                            </div>
+                                                                                   </TabPanel>
+                                                                                   <TabPanel>
+                                                                                            <div>
+                                                                                                <div>
+                                                                                                    <h5>Title</h5>
+                                                                                                    <input type="text" name="item_price" id="item_price" class="input100" placeholder="e.g. 'Crypto Funk" />
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <h5>Description</h5>
+                                                                                                    <input type="text" name="item_price" id="item_price" class="input100" placeholder="e.g. 'This is very limited item'" />
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <h5>Royalties</h5>
+                                                                                                    <input type="text" name="item_price" id="item_price" class="input100" placeholder="suggested: 0, 10%, 20%, 30%. Maximum is 70%" />
+                                                                                                </div>
 
-                                                                                    <li class="item-cat-btn">
-                                                                                        <span><i
-                                                                                                class="icofont-twitter"></i></span>
-                                                                                        Tweets
-                                                                                    </li>
-                                                                                    <li class="item-cat-btn">
-                                                                                        <span><i
-                                                                                                class="icofont-bill"></i></span>
-                                                                                        Rare Item
-                                                                                    </li>
-                                                                                    <li class="item-cat-btn">
-                                                                                        <span>
-                                                                                            <i class="icofont-box"></i>
-                                                                                        </span> Collectibles
-                                                                                    </li>
-                                                                                    <li class="item-cat-btn">
-                                                                                        <span><i
-                                                                                                class="icofont-gift"></i></span>
-                                                                                        NFT
-                                                                                        Gifts
-                                                                                    </li>
-                                                                                </ul>
-                                                                            </div>
-                                                                            
-                                                                            <div class="item-price-field mb-3">
-                                                                                <div class="row g-3">
-                                                                                    <div class="col-md-6">
-                                                                                        <div class="form-floating">
-                                                                                            <select class="form-select"
-                                                                                                id="selectCrypto"
-                                                                                                aria-label="Floating label select">
-                                                                                                <option selected>
-                                                                                                    Ethereum
-                                                                                                </option>
-                                                                                                <option value="1">
-                                                                                                    BitCoin
-                                                                                                </option>
-                                                                                                <option value="2">Dollar
-                                                                                                </option>
-                                                                                                <option value="3">Pound
-                                                                                                </option>
-                                                                                            </select>
-                                                                                            <label
-                                                                                                for="selectCrypto">Select
-                                                                                                Currency</label>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div class="col-md-6">
-                                                                                        <div class="form-floating">
-                                                                                            <input type="text"
-                                                                                                class="form-control"
-                                                                                                id="itemPriceInput"
-                                                                                                placeholder="Item Price" />
-                                                                                            <label
-                                                                                                for="itemPriceInput">Item
-                                                                                                Price</label>
-                                                                                        </div>
-                                                                                    </div>
+                                                                                            </div>
+                                                                                    </TabPanel>
+                                                                                    </Tabs>
+
+                                                                                <div>
+                                                                                    
+                                                                                    <input type="button" class="btn-main1" value="Create Item" onClick={createItem}/>
                                                                                 </div>
                                                                             </div>
-                                                                           
-                                                                            <div class="item-price-field mb-5">
-                                                                                <div
-                                                                                    class="row g-3 justify-content-center">
-                                                                                    <div class="col-md-6 col-lg-4">
-                                                                                        <div class="form-floating">
-                                                                                            <input type="text"
-                                                                                                class="form-control"
-                                                                                                id="royalityInput"
-                                                                                                placeholder="Royalities" />
-                                                                                            <label
-                                                                                                for="royalityInput">Royalities</label>
-                                                                                        </div>
+                                                                        </div>
+                                                                        <div className="col-md-4 rightaide_item">
+                                                                            <h5>Preview item</h5>
+                                                                            <div class="nft__item mt-3">
+                                                                                    {/* <div class="de_countdown is-countdown" data-year="2021" data-month="10" data-day="16" data-hour="8" >
+                                                                                        <span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">22d</span>
+                                                                                        </span><span class="countdown-section"><span class="countdown-amount">18h</span></span><span class="countdown-section">
+                                                                                            <span class="countdown-amount">58m</span></span><span class="countdown-section"><span class="countdown-amount">2s</span>
+                                                                                            </span></span>
+                                                                                            </div> */}
+                                                                                    {/* <div class="author_list_pp">
+                                                                                        <a href="#">                                    
+                                                                                        <img src={require('../images/coll-item-3.jpg').default} alt="" />
+                                                                                            <i class="fa fa-check"></i>
+                                                                                        </a>
+                                                                                    </div> */}
+                                                                                    <div class="nft__item_wrap">
+                                                                                        <a href="#">
+                                                                                            {imageFileshow?(<img src={imageFileshow} alt="" />):( <img src={require('../images/coll-item-3.jpg').default} alt="" />)}
+                                                                                            
+                                                                                        </a>
                                                                                     </div>
-                                                                                    <div class="col-md-6 col-lg-4">
-                                                                                        <div class="form-floating">
-                                                                                            <input type="text"
-                                                                                                class="form-control"
-                                                                                                id="sizeInput"
-                                                                                                placeholder="Size" />
-                                                                                            <label for="sizeInput">Size
-                                                                                            </label>
+                                                                                    <div class="nft__item_info">
+                                                                                        <a href="#">
+                                                                                            {name?(  <h4>{name}</h4>):(  <h4>[name]</h4>)}
+                                                                                          
+                                                                                        </a>
+                                                                                        <div class="nft__item_price">
+                                                                                        {price?(<> {price}</>):(<> 0.000</>)} ETH<span></span>
                                                                                         </div>
-                                                                                    </div>
-                                                                                    <div class="col-md-6 col-lg-4">
-                                                                                        <div class="form-floating">
-                                                                                            <input type="text"
-                                                                                                class="form-control"
-                                                                                                id="itemNumbersInput"
-                                                                                                placeholder="Number of Copies" />
-                                                                                            <label
-                                                                                                for="itemNumbersInput">Number
-                                                                                                of Copies</label>
+                                                                                        <div class="nft__item_action">
+                                                                                            <a href="#">{selectedcat}</a>
                                                                                         </div>
-                                                                                    </div>
+                                                                                        <a href="#">
+                                                                                            {description?(<>  {description.length>40? (<h4>{description.substring(0, 40)}...</h4>):(<h4>{description}</h4>)}</>):(  <h4>[description]</h4>)}
+                                                                                          
+                                                                                        </a>
+                                                                                     
+                                                                                    
+                                                                                        {/* <div class="nft__item_like">
+                                                                                            <i class="fa fa-heart"></i><span>50</span>
+                                                                                        </div>                             */}
+                                                                                    </div> 
                                                                                 </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="submit-btn-field text-center">
-                                                                                <button type="submit">Create
-                                                                                    Item</button>
-                                                                            </div>
-                                                                        </form>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
+                                                            </section>
                                                         </TabPanel>
                                                         {/* </div> */}
                                                         {/* <div class="tab-pane fade mentions-section show active"
                                                             id="pills-mentions" role="tabpanel"
                                                             aria-labelledby="pills-mentions-tab"> */}
                                                             <TabPanel>
-
+                                                            
+                                                            {marketItems.length>0?(
                                                             <div class="row justify-content-center gx-3 gy-2">
-                                                                <div class="col-lg-4 col-sm-6">
+                                                            {marketItems.map(function(item, i){
+                                                                    return(
+                                                                    <div class="col-lg-4 col-sm-6">
                                                                     <div class="nft-item">
                                                                         <div class="nft-inner">
                                                                             
@@ -489,25 +1043,9 @@ React.useEffect(() => {
                                                                                 class="nft-item-top d-flex justify-content-between align-items-center">
                                                                                 <div class="author-part">
                                                                                     <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                                <img src={require('../images/seller/01.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/01.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
                                                                                         <li
                                                                                             class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                  <img src={require('../images/seller/02.gif') .default} alt="" />  
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/02.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Jhon
-                                                                                                    Doe</a>
+                                                                                            <h6><a href="author.html">{item.seller}</a>
                                                                                             </h6>
                                                                                         </li>
                                                                                     </ul>
@@ -541,600 +1079,87 @@ React.useEffect(() => {
                                                                            
                                                                             <div class="nft-item-bottom">
                                                                                 <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/02.jpg') .default} alt="" />
+                                                                                <img src={item.image} alt="" />
                                                                                     {/* <img src="assets/images/nft-item/02.jpg"
                                                                                         alt="nft-img"> */}
 
+                                                                                    {item.is_auction ?
+                                                                                        <ul class="nft-countdown count-down"
+                                                                                        data-date="July 05, 2022 21:14:01">
+                                                                                        <li>
+                                                                                            <span
+                                                                                                class="days">{date_diff_from_now(item.endTime).days}</span><span
+                                                                                                class="count-txt">D</span>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                            <span
+                                                                                                class="hours">{date_diff_from_now(item.endTime).hours}</span><span
+                                                                                                class="count-txt">H</span>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                            <span
+                                                                                                class="minutes">{date_diff_from_now(item.endTime).minutes}</span><span
+                                                                                                class="count-txt">M</span>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                            <span
+                                                                                                class="seconds">{date_diff_from_now(item.endTime).seconds}</span><span
+                                                                                                class="count-txt">S</span>
+                                                                                        </li>
+                                                                                    </ul>
+                                                                                    :
+                                                                                    null
+                                                                                }
                                                                                     
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
                                                                                 </div>
                                                                                 <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">Walking
-                                                                                            On
-                                                                                            Air</a> </h4>
+                                                                                    <h4><a href="#">{item.name}</a> </h4>
                                                                                     <div
                                                                                         class="price-like d-flex justify-content-between align-items-center">
+                                                                                       {item.is_auction ?
+                                                                                       <p class="nft-price">
+                                                                                   </p>
+                                                                                       :
                                                                                         <p class="nft-price">Price:
                                                                                             <span
-                                                                                                class="yellow-color">0.34
+                                                                                                class="yellow-color">{item.price}
                                                                                                 ETH</span>
                                                                                         </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            230</a>
+                                                                                        }
+                                                                                        {item.seller.toLowerCase() != currentUserAddress.toLowerCase() ?
+                                                                                            item.is_auction ?
+                                                                                            <p className="btn btn-primary float-right" onClick={() => bidNft(item)} >
+                                                                                                Make Bid
+                                                                                            </p>
+                                                                                            :
+                                                                                            <p className="btn btn-primary float-right" onClick={() => buyNft(item)} >
+                                                                                                Buy now
+                                                                                            </p>
+                                                                                        :
+                                                                                        null
+                                                                                        }
+
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                            
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/05.gif') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/05.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Gucci
-                                                                                                    Lucas</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
+                                                                </div>  
+                                                            )
 
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/05.gif') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/05.gif"
-                                                                                        alt="nft-img"> */}
-
-                                                                                   
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">EUPHORIA
-                                                                                            de</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            230</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                           
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/01.gif') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/01.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/06.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/06.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/01.png') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/01.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Ecalo
-                                                                                                    jers</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                           
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/03.jpg') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/03.jpg"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">Mewao
-                                                                                            com de</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            278</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                           
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/03.gif') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/03.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/04.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/04.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/07.png') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/07.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Hola
-                                                                                                    moc</a>
-                                                                                            </h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/01.gif') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/01.gif"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">pet
-                                                                                            mice rio</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            340</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                            
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/04.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/04.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/04.gif') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/04.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                             </a>
-                                                                                            <h6><a href="author.html">Logicto
-                                                                                                    pen</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/05.jpg') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/05.jpg"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">Logical
-                                                                                            Impact </a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            330</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                            
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/01.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/01.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/04.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/04.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/06.png') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/06.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">unique
-                                                                                                    lo</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part"><i
-                                                                                        class="icofont-flikr"></i></div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/04.gif') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/04.gif"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">Fly
-                                                                                            on high</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            355</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="load-btn">
-                                                                <a href="#" class="default-btn move-bottom"><span>Load
-                                                                        More</span> </a>
-                                                            </div>
-                                                        {/* </div> */}
-                                                        </TabPanel>
+                                                            })}
+                                                            </div>                                                             ):(      <div className="nodata-found text-center">
+                                                            <p>No Data Found</p>
+                                                        </div>)}                                                        </TabPanel>
                                                         {/* <div class="tab-pane fade" id="pills-favorites" role="tabpanel"
                                                             aria-labelledby="pills-favorites-tab"> */}
                                                             <TabPanel>
                                                             <div class="row justify-content-center gx-3 gy-2">
-                                                                <div class="col-lg-4 col-sm-6">
+                                                                
+                                                                {myNftitems.length > 0 && myNftitems.map(function(item, i){
+                                                                    
+                                                                return(
+                                                                <div class="col-lg-4 col-sm-6 test_2">
                                                                     <div class="nft-item">
                                                                         <div class="nft-inner">
                                                                             
@@ -1243,789 +1268,26 @@ React.useEffect(() => {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                            
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/06.gif') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/06.gif"
-                                                                                                    alt="author-img">
-                                                                                                         */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Gucci
-                                                                                                    Lucas</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/02.gif') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/02.gif"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">EUPHORIA
-                                                                                            de</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            230</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                            
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/01.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/01.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/01.gif') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/01.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/01.png') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/01.png"
-                                                                                                    alt="author-img"> */}
-                                                                                             </a>
-                                                                                            <h6><a href="author.html">Ecalo
-                                                                                                    jers</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/02.jpg') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/02.jpg"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">Mewao
-                                                                                            com de</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            278</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="load-btn">
-                                                                <a href="#" class="default-btn move-bottom"><span>Load
-                                                                        More</span> </a>
+                                                                )
+                                                                })}
                                                             </div>
                                                         {/* </div> */}
                                                         </TabPanel>
                                                         {/* <div class="tab-pane fade" id="pills-friends" role="tabpanel"
                                                             aria-labelledby="pills-friends-tab"> */}
                                                         <TabPanel>
+                                                            {createdItems.length>0?(
                                                             <div class="row justify-content-center gx-3 gy-2">
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                            
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/02.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/02.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/04.png') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/04.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Jhon
-                                                                                                    Doe</a>
-                                                                                            </h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/03.gif') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/03.gif"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">Walking
-                                                                                            On
-                                                                                            Air</a> </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            230</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                           
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/04.gif') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/04.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Gucci
-                                                                                                    Lucas</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/07.jpg') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/07.jpg"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">EUPHORIA
-                                                                                            de</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            230</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                            
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/05.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/05.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/02.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/02.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/05.gif') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/05.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Ecalo
-                                                                                                    jers</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/06.gif') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/06.gif"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">Mewao
-                                                                                            com de</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            278</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                           
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/02.gif') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/02.gif"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/07.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/07.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/01.png') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/01.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Hola
-                                                                                                    moc</a>
-                                                                                            </h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/04.jpg') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/04.jpg"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">pet
-                                                                                            mice rio</a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            340</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-lg-4 col-sm-6">
-                                                                    <div class="nft-item">
-                                                                        <div class="nft-inner">
-                                                                            
-                                                                            <div
-                                                                                class="nft-item-top d-flex justify-content-between align-items-center">
-                                                                                <div class="author-part">
-                                                                                    <ul class="author-list d-flex">
-                                                                                        <li class="single-author">
-                                                                                            <a href="author.html">
-                                                                                            <img src={require('../images/seller/03.png') .default} alt="" />
-                                                                                                {/* <img
-                                                                                                    src="assets/images/seller/03.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <li
-                                                                                            class="single-author d-flex align-items-center">
-                                                                                            <a href="author.html"
-                                                                                                class="veryfied">
-                                                                                                    <img src={require('../images/seller/04.png') .default} alt="" />
-                                                                                                    {/* <img
-                                                                                                    src="assets/images/seller/04.png"
-                                                                                                    alt="author-img"> */}
-                                                                                            </a>
-                                                                                            <h6><a href="author.html">Logicto
-                                                                                                    pen</a></h6>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="more-part">
-                                                                                    <div class=" dropstart">
-                                                                                        <a class=" dropdown-toggle"
-                                                                                            href="#" role="button"
-                                                                                            data-bs-toggle="dropdown"
-                                                                                            aria-expanded="false"
-                                                                                            data-bs-offset="25,0">
-                                                                                            <i
-                                                                                                class="icofont-flikr"></i>
-                                                                                        </a>
-
-                                                                                        <ul class="dropdown-menu">
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span>
-                                                                                                        <i
-                                                                                                            class="icofont-warning"></i>
-                                                                                                    </span> Report </a>
-                                                                                            </li>
-                                                                                            <li><a class="dropdown-item"
-                                                                                                    href="#"><span><i
-                                                                                                            class="icofont-reply"></i></span>
-                                                                                                    Share</a></li>
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            
-                                                                            <div class="nft-item-bottom">
-                                                                                <div class="nft-thumb">
-                                                                                <img src={require('../images/nft-item/05.gif') .default} alt="" />
-                                                                                    {/* <img src="assets/images/nft-item/05.gif"
-                                                                                        alt="nft-img"> */}
-
-                                                                                    
-                                                                                    <ul class="nft-countdown count-down"
-                                                                                        data-date="July 05, 2022 21:14:01">
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="days">34</span><span
-                                                                                                class="count-txt">D</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="hours">09</span><span
-                                                                                                class="count-txt">H</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="minutes">32</span><span
-                                                                                                class="count-txt">M</span>
-                                                                                        </li>
-                                                                                        <li>
-                                                                                            <span
-                                                                                                class="seconds">32</span><span
-                                                                                                class="count-txt">S</span>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
-                                                                                <div class="nft-content">
-                                                                                    <h4><a href="item-details.html">Logical
-                                                                                            Impact </a>
-                                                                                    </h4>
-                                                                                    <div
-                                                                                        class="price-like d-flex justify-content-between align-items-center">
-                                                                                        <p class="nft-price">Price:
-                                                                                            <span
-                                                                                                class="yellow-color">0.34
-                                                                                                ETH</span>
-                                                                                        </p>
-                                                                                        <a href="#" class="nft-like"><i
-                                                                                                class="icofont-heart"></i>
-                                                                                            330</a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
+                                                                 {createdItems}
                                                             </div>
-                                                            <div class="load-btn">
+                                                            ):(      <div className="nodata-found text-center">
+                                                            <p>No Data Found</p>
+                                                        </div>)}
+                                                      
+                                                            {/* <div class="load-btn">
                                                                 <a href="#" class="default-btn move-bottom"><span>Load
                                                                         More</span> </a>
-                                                            </div>
+                                                            </div> */}
                                                         {/* </div> */}
                                                         </TabPanel>
                                                         {/* <div class="tab-pane fade" id="pills-groups" role="tabpanel"
@@ -2690,98 +1952,7 @@ React.useEffect(() => {
                                         </div>
 
                                         
-                                        <div class="col-xl-3">
-                                            <aside class="mt-5 mt-xl-0">
-                                                <div class="profile-widget search-widget">
-                                                    <div class="widget-inner">
-                                                        <div class="widget-title">
-                                                            <h5>Search NFT</h5>
-                                                        </div>
-                                                        <div class="widget-content">
-                                                            <p>Search from best Rarest NFT collections</p>
-                                                            <div class="form-floating nft-search-input">
-                                                                <input type="text" class="form-control"
-                                                                    placeholder="Search NFT" />
-                                                                <label>Search NFT</label>
-                                                                <button type="button"> <i
-                                                                        class="icofont-search-1"></i></button>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="widget widget-instagram">
-                                                    <div class="widget-header">
-                                                        <h5 class="title">Featured NFT</h5>
-                                                    </div>
-                                                    <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/01.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/01.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/02.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/02.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/03.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/03.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/04.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/04.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/05.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/05.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/06.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/06.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/07.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/07.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/08.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/08.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="#">
-                                                                    <img loading="lazy" src={require('../images/nft-item/09.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/09.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                    </ul>
-                                                </div>
-                                            </aside>
-                                        </div>
+                                    
                                     </div>
                                 </div>
                                 </TabPanel>
@@ -2793,7 +1964,7 @@ React.useEffect(() => {
                             <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-9">
+                                        <div class="col-xl-12">
                                             <article>
 
                                                 <div class="info-card mb-3">
@@ -2856,98 +2027,6 @@ React.useEffect(() => {
                                         </div>
 
                                         
-                                        <div class="col-xl-3">
-                                            <aside class="mt-5 mt-xl-0">
-                                                <div class="profile-widget search-widget">
-                                                    <div class="widget-inner">
-                                                        <div class="widget-title">
-                                                            <h5>Search NFT</h5>
-                                                        </div>
-                                                        <div class="widget-content">
-                                                            <p>Search from best Rarest NFT collections</p>
-                                                            <div class="form-floating nft-search-input">
-                                                                <input type="text" class="form-control"
-                                                                    placeholder="Search NFT" />
-                                                                <label>Search NFT</label>
-                                                                <button type="button"> <i
-                                                                        class="icofont-search-1"></i></button>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="widget widget-instagram">
-                                                    <div class="widget-header">
-                                                        <h5 class="title">Featured NFT</h5>
-                                                    </div>
-                                                    <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/01.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/01.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/01.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/02.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/02.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/02.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/03.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/03.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/03.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/04.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/04.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/04.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/05.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/05.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/05.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/06.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/06.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/06.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/07.jp">
-                                                                    <img loading="lazy" src={require('../images/nft-item/07.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/07.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/08.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/08.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/08.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/09.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/09.jpg') .default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/09.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                    </ul>
-                                                </div>
-                                            </aside>
-                                        </div>
                                     </div>
                                 </div>
                                 </TabPanel>
@@ -2957,7 +2036,7 @@ React.useEffect(() => {
                             <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-9">
+                                        <div class="col-xl-12">
                                             <article>
                                                 <h4 class="h4-title">Author's Activity</h4>
                                                 <div class="row gy-3">
@@ -3077,98 +2156,7 @@ React.useEffect(() => {
                                         </div>
 
                                         
-                                        <div class="col-xl-3">
-                                            <aside class="mt-5 mt-xl-0">
-                                                <div class="profile-widget search-widget">
-                                                    <div class="widget-inner">
-                                                        <div class="widget-title">
-                                                            <h5>Search NFT</h5>
-                                                        </div>
-                                                        <div class="widget-content">
-                                                            <p>Search from best Rarest NFT collections</p>
-                                                            <div class="form-floating nft-search-input">
-                                                                <input type="text" class="form-control"
-                                                                    placeholder="Search NFT" />
-                                                                <label>Search NFT</label>
-                                                                <button type="button"> <i
-                                                                        class="icofont-search-1"></i></button>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="widget widget-instagram">
-                                                    <div class="widget-header">
-                                                        <h5 class="title">Featured NFT</h5>
-                                                    </div>
-                                                    <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/01.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/01.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/01.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/02.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/02.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/02.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/03.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/03.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/03.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/04.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/04.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/04.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/05.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/05.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/05.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/06.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/06.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/06.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/07.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/07.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/07.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/08.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/08.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/08.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/09.jpg">
-                                                                    <img loading="" src={require('../images/nft-item/09.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/09.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                    </ul>
-                                                </div>
-                                            </aside>
-                                        </div>
+                                        
                                     </div>
                                 </div>
                             {/* </div> */}
@@ -3178,7 +2166,7 @@ React.useEffect(() => {
                                <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-9">
+                                        <div class="col-xl-12">
                                             <div class="follow-wrapper">
                                                 <h4 class="h4-title">All Followers</h4>
                                                 <div class="row g-3">
@@ -3587,98 +2575,7 @@ React.useEffect(() => {
                                         </div>
 
                                         
-                                        <div class="col-xl-3">
-                                            <aside class="mt-5 mt-xl-0">
-                                                <div class="profile-widget search-widget">
-                                                    <div class="widget-inner">
-                                                        <div class="widget-title">
-                                                            <h5>Search NFT</h5>
-                                                        </div>
-                                                        <div class="widget-content">
-                                                            <p>Search from best Rarest NFT collections</p>
-                                                            <div class="form-floating nft-search-input">
-                                                                <input type="text" class="form-control"
-                                                                    placeholder="Search NFT" />
-                                                                <label>Search NFT</label>
-                                                                <button type="button"> <i
-                                                                        class="icofont-search-1"></i></button>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="widget widget-instagram">
-                                                    <div class="widget-header">
-                                                        <h5 class="title">Featured NFT</h5>
-                                                    </div>
-                                                    <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/01.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/01.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/01.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/02.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/02.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/02.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/03.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/03.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/03.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/04.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/04.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/04.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/05.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/05.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/05.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/06.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/06.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/06.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/07.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/07.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/07.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/08.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/08.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/08.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                        <li><a data-rel="lightcase"
-                                                                href="assets/images/nft-item/09.jpg">
-                                                                    <img loading="lazy" src={require('../images/nft-item/09.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/09.jpg"
-                                                                    alt="nft-img"> */}
-                                                            </a></li>
-                                                    </ul>
-                                                </div>
-                                            </aside>
-                                        </div>
+                                       
                                     </div>
                                 </div>
                             {/* </div> */}
@@ -3688,7 +2585,7 @@ React.useEffect(() => {
                                 aria-labelledby="nav-following-tab"> */}
                                 <TabPanel>
                                 <div class="row">
-                                    <div class="col-xl-9">
+                                    <div class="col-xl-12">
                                         <div class="follow-wrapper">
                                             <h4 class="h4-title">Following</h4>
                                             <div class="row g-3">
@@ -4085,98 +2982,7 @@ React.useEffect(() => {
                                     </div>
 
                                    
-                                    <div class="col-xl-3">
-                                        <aside class="mt-5 mt-xl-0">
-                                            <div class="profile-widget search-widget">
-                                                <div class="widget-inner">
-                                                    <div class="widget-title">
-                                                        <h5>Search NFT</h5>
-                                                    </div>
-                                                    <div class="widget-content">
-                                                        <p>Search from best Rarest NFT collections</p>
-                                                        <div class="form-floating nft-search-input">
-                                                            <input type="text" class="form-control"
-                                                                placeholder="Search NFT" />
-                                                            <label>Search NFT</label>
-                                                            <button type="button"> <i
-                                                                    class="icofont-search-1"></i></button>
-                                                        </div>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="widget widget-instagram">
-                                                <div class="widget-header">
-                                                    <h5 class="title">Featured NFT</h5>
-                                                </div>
-                                                <ul class="widget-wrapper d-flex flex-wrap justify-content-center">
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/01.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/01.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/01.jpg" alt="nft-img"> */}
-                                                        </a>
-                                                    </li>
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/02.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/02.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/02.jpg" alt="nft-img"> */}
-                                                         </a>
-                                                    </li>
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/03.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/03.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/03.jpg" alt="nft-img"> */}
-                                                         </a>
-                                                    </li>
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/04.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/04.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/04.jpg" alt="nft-img"> */}
-                                                            </a>
-                                                    </li>
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/05.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/02.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/05.jpg" alt="nft-img"> */}
-                                                        </a>
-                                                    </li>
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/06.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/06.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/06.jpg" alt="nft-img"> */}
-                                                        </a>
-                                                    </li>
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/07.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/07.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/07.jpg" alt="nft-img"> */}
-                                                         </a>
-                                                    </li>
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/08.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/08.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/08.jpg" alt="nft-img"> */}
-                                                        </a>
-                                                    </li>
-                                                    <li><a data-rel="lightcase"
-                                                            href="assets/images/nft-item/09.jpg">
-                                                                <img loading="lazy" src={require('../images/nft-item/09.jpg').default} alt="" />
-                                                                {/* <img loading="lazy"
-                                                                src="assets/images/nft-item/09.jpg" alt="nft-img"> */}
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </aside>
-                                    </div>
+                                   
                                 </div>
                             {/* </div> */}
                             </TabPanel>
@@ -4185,7 +2991,7 @@ React.useEffect(() => {
                             <TabPanel>
                                 <div>
                                     <div class="row">
-                                        <div class="col-xl-9">
+                                        <div class="col-xl-12">
                                             <div class="wallet-wrapper">
                                                 <div class="wallet-title">
                                                     <h4>Connect your wallet</h4>
@@ -4291,7 +3097,7 @@ React.useEffect(() => {
                                             </div>
                                         </div>
                                        
-                                        <div class="col-xl-3">
+                                        {/* <div class="col-xl-3">
                                             <aside class="mt-5 mt-xl-0">
                                                 <div class="profile-widget search-widget">
                                                     <div class="widget-inner">
@@ -4319,58 +3125,42 @@ React.useEffect(() => {
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/01.jpg">
                                                                     <img loading="lazy" src={require('../images/nft-item/01.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/01.jpg"
-                                                                    alt="nft-img"> */}
+                                                                   
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/02.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/02.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/02.jpg"
-                                                                    alt="nft-img"> */}
+                                                                   
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/03.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/03.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/03.jpg"
-                                                                    alt="nft-img"> */}
+                                                                   
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/04.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/04.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/04.jpg"
-                                                                    alt="nft-img"> */}
+                                                                  
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/05.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/05.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/05.jpg"
-                                                                    alt="nft-img"> */}
+                                                                   
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/06.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/06.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/06.jpg"
-                                                                    alt="nft-img"> */}
+                                                                  
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/07.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/07.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/07.jpg"
-                                                                    alt="nft-img"> */}
+                                                                   
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/08.jpg">
                                                                      <img loading="lazy" src={require('../images/nft-item/08.jpg').default} alt="" />
-                                                                    {/* <img loading="lazy"
-                                                                    src="assets/images/nft-item/08.jpg"
-                                                                    alt="nft-img"> */}
+                                                                   
                                                             </a></li>
                                                         <li><a data-rel="lightcase"
                                                                 href="assets/images/nft-item/09.jpg">
@@ -4382,7 +3172,7 @@ React.useEffect(() => {
                                                     </ul>
                                                 </div>
                                             </aside>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                                 </TabPanel>
@@ -4394,7 +3184,24 @@ React.useEffect(() => {
             </div>
         </div>
     </section>
+    
+    
 
+      <Modal show={show} onHide={handleClose}
+      size="md"
+      aria-labelledby="contained-modal-title-vcenter"
+      centered className="loader-modal">
+        {/* <Modal.Header closeButton>
+          <Modal.Title></Modal.Title>
+        </Modal.Header> */}
+        <Modal.Body className="text-center py-0">
+            <h3>{message1}</h3>
+            <div className="loader-gif">
+                <img src={require('../images/nft-pop-image.gif').default}></img>
+            </div>
+            <p>{message2}</p>
+        </Modal.Body>
+      </Modal>
         </>
     )
 }

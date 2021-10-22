@@ -1,34 +1,176 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {Button, Dropdown, Modal, Nav} from 'react-bootstrap';
 import { useMoralis } from "react-moralis";
 import { Link } from 'react-router-dom';
+import { formValidation } from '../../_services';
+import { LoadingSpinerComponent } from './loader';
 function Header()
-{
-
-    const {  authenticate,isAuthenticated, user,logout,isAuthenticating,Moralis } = useMoralis();
+{ 
+    const[loader,setLoader]=useState(false)
+    const [balance, setBalanvce] = React.useState('');
+    const [ERR, setERR] = React.useState('');
+    const [username, setusername] = React.useState('');
+    const [fname, setfname] = React.useState('');
+    const [lname, setlname] = React.useState('');
+    const [email, setemail] = React.useState('');
+    const [social1, setsocial1] = React.useState('');
+    const [social2, setsocial2] = React.useState('');
+    const [show, setshowmodale] = React.useState(false);
+    const {  authenticate,isAuthenticated, user,userError,error,logout,isAuthenticating,Moralis , enableWeb3, isWeb3Enabled  } = useMoralis();
+    const errors = {
+        email: "",
+        username:"",
+        firsname:"",
+        lastname:"",
+        link1:"",
+        link2:"",
+       formIsValid:false,
+     };
+   
     React.useEffect(() => {
-        if(isAuthenticated){
-            console.log("--------------------------",user.get("firstname"))
-            if(user.get("name") == undefined){
-                console.log("open modal");
-            }
+        if(!isWeb3Enabled && isAuthenticated){
+            enableWeb3({provider: "walletconnect"})
+            console.log("web3 activated");
+            // if(isAuthenticated){
+            //     console.log("--------------------------",user.get("firstname"))
+            //     if(user.get("firstname") == undefined){
+            //         console.log("open modal");
+            //     }
+            // }
+
         }
 
-    }, []);
-    // const loginwithmetamask = () => {
-    //     // enableWeb3()
-    //     Moralis.authenticate().then(function (user) { 
+        if(isAuthenticated){
           
-    //     })
-    // }
+            console.log("--------------------------",user.get("firstname"))
+              console.log(user,"===current")
+              if(user && user.get("firstname") == undefined){
+                setshowmodale(true)
+                console.log(user,"open modal1====");
+             }
+        }
 
+        var axios = require('axios');
+
+        var config = {
+          method: 'get',
+          url: 'https://deep-index.moralis.io/api/v2/0x057Ec652A4F150f7FF94f089A38008f49a0DF88e/balance?chain=eth',
+          headers: { 
+            'accept': 'application/json', 
+            'X-API-Key': '3Ur7Kdm9AtnEnIt6haF5rEFGy2gzRFRUwVI4HxtYCJJq38su3dxYEsHpxk1v5Lip'
+          }
+        };
+        axios(config).then(function (response) {
+        setBalanvce(response.data.balance);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+        
+
+    }, []);
+
+    async function loginwithmetamask() {
+        // enableWeb3()
+       await authenticate({ provider: "walletconnect" ,  chainId: 4 }).then((response) => {
+            if (userError){
+                console.log("User Error flagged")
+                // setLoader(false)
+                console.log(response)
+            } else {
+                // window.location.reload();
+              
+                let currentuser = Moralis.User.current();
+                console.log(currentuser)
+               
+                    if(currentuser && currentuser.get("firstname") == undefined){
+                    setshowmodale(true)
+                    console.log(user,"open modal====");
+                 }
+                
+              
+              
+                
+                // setLoader(false)
+                // setshowmodale(false)
+            }
+        })
+        .catch((err) => {
+            setLoader(false)
+            console.log("Failed update")
+             console.log(error)
+            console.error("Error signing in.", err.toString());
+        // setErrorMsg(response.toString());
+        })
+    }
+  
+
+    const createprofile = async () => {
+        // console.log(user,"=====current");
+
+  
+        // setLoader(true)
+
+
+        setLoader(true)
+        let params = {
+            "firstname":fname,
+            "lastname":lname,
+            "email":email,
+            "username":username,
+            "social_link1":social1,
+            "social_link2":social2,
+            
+        }
+        
+        let validate = formValidation.createprofile(params,errors);
+        setERR(validate)
+        if(validate.formIsValid){
+            setLoader(true)
+        user.set("username", username);
+        user.set("firstname", fname);
+        user.set("lastname", lname);
+        user.set("email", email);
+        user.set("social_link1", social1);
+        user.set("social_link2", social2);
+      
+        await user.save() .then((response) => {
+            if (userError){
+                console.log("User Error flagged")
+                setLoader(false)
+                console.log(response)
+                setshowmodale(false)
+            } else {
+                console.log("Sucessfully updated")
+                console.log(response)
+                setLoader(false)
+                setshowmodale(false)
+            }
+        })
+        .catch((err) => {
+            setLoader(false)
+            console.log("Failed update")
+             console.log(error)
+            console.error("Error signing in.", err.toString());
+        // setErrorMsg(response.toString());
+        setshowmodale(false)
+        })
+    }
+       
+      };
+      const handleClose = () => setshowmodale(false);
+      const handleShow = () => setshowmodale(true);
+
+      function spinner() {
+        document.getElementsByClassName("loader").style.display = "block";
+        }
 
     // console.log(user.get)
     
     return (
         <>
  
-
+           <LoadingSpinerComponent promiseInProgress={loader} />
             <header className="header">
         <div className="container-fluid">
             <div className="header__content">
@@ -139,7 +281,7 @@ function Header()
                     <div className="header__action header__action--profile">
                         <div className="dropdown">
                         {user?(
-                        <a className="header__action-btn" type="button" href="/author">{user.get("username")} </a>
+                        <a className="header__action-btn" type="button" href={"/user/"+user.get("ethAddress")+"?tab=create"}>{user.get("username")} </a>
                         ):(<></>)}
                       
                             {/* <a className="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
@@ -173,17 +315,23 @@ function Header()
                     </div>
                    
                     <div className="dropdown-item header__action-btn" onClick={() => logout()} disabled={isAuthenticating}>
-                            Sign
-                                        Out <span className="ms-1"><i className="icofont-logout"></i></span></div>
+                            Sign Out <span className="ms-1"><i className="icofont-logout"></i></span></div>
                 
                     <div className="wallet-btn">
                         <a href="/wallet"><span><i className="icofont-wallet"></i></span> <span
-                                className="d-none d-md-inline">234.98ETH</span> </a>
+                                className="d-none d-md-inline">{balance} ETH</span> </a>
                     </div>
                     </>
-                    ):(<>   <div className="dropdown-item" onClick={() => authenticate()} >
-                     Connect with metamask <span className="ms-1"></span></div><Link className="dropdown-item" to="/signin">
-                   Login <span className="ms-1"><i className="icofont-login"></i></span></Link></>)}
+
+
+
+
+                    ):(<>   <div className="dropdown-item" onClick={() => loginwithmetamask() } >
+                     Connect with wallet <span className="ms-1"></span></div>
+                     {/* <Link className="dropdown-item" to="/signin">
+                   Login <span className="ms-1"><i className="icofont-login"></i></span></Link>
+                    */}
+                   </>)}
 
                 </div>
 
@@ -198,57 +346,72 @@ function Header()
       {/* {JSON.stringify(user)} */}
     </pre>
 
-    {/* <Modal show={false} 
+    <Modal show={show} onHide={handleClose}
+        
       size="md"
       aria-labelledby="contained-modal-title-vcenter"
       centered className="loader-modal">
+          <Modal.Header closeButton>
+          <Modal.Title> <h3 style={{marginLeft:"15px"}}>Create Profile</h3></Modal.Title>
+              </Modal.Header>
         <Modal.Body className="text-center py-0">
-            <h3>Create Profile</h3>
+           
+            
             <form class="account-form">
                             <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="userIdInput" placeholder="user-id"  onChange={(e)=>setUsername(e.target.value)}/>
-                                <label for="userIdInput">User ID</label>
-                                {ERR?(<span className="errors">{ERR.username}</span>):(<></>)}
+                                <input type="email" class="form-control" id="userIdInput" placeholder="name@example.com"  onChange={(e)=>setemail(e.target.value)}/>
+                                <label for="userIdInput">Email</label>
+                                {ERR?(<span className="errors">{ERR.email}</span>):(<></>)}
                             </div>
                             <div class="form-floating mb-3">
-                                <input type="email" class="form-control" id="floatingInput"
-                                    placeholder="name@example.com" onChange={(e)=>setEmail(e.target.value)}/>
-                                <label for="floatingInput">Email address</label>
-                                {ERR?(<span className="errors">{ERR.email}</span>):(<></>)}
+                                <input type="text" class="form-control" id="floatingInput"
+                                    placeholder="John" onChange={(e)=>setusername(e.target.value)}/>
+                                <label for="floatingInput">Username</label>
+                                {ERR?(<span className="errors">{ERR.username}</span>):(<></>)}
 
                             </div>
-                            <div class="form-floating mb-3">
+                              <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="floatingInput"
+                                    placeholder="John" onChange={(e)=>setfname(e.target.value)}/>
+                                <label for="floatingInput">First Name</label>
+                                {ERR?(<span className="errors">{ERR.firstname}</span>):(<></>)}
+
+                            </div>
+                            {/* <div class="form-floating mb-3">
                                 <input type="password" class="form-control" id="floatingPassword"
                                     placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
                                 <label for="floatingPassword" >Password</label>
                                 {ERR?(<span className="errors">{ERR.password}</span>):(<></>)}
+                            </div> */}
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="confirmPass"
+                                    placeholder="Smith" onChange={(e)=>setlname(e.target.value)}/>
+                                <label for="confirmPass">Last Name</label>
+                                {ERR?(<span className="errors">{ERR.lastname}</span>):(<></>)}
                             </div>
                             <div class="form-floating mb-3">
-                                <input type="password" class="form-control" id="confirmPass"
-                                    placeholder="Confirm Password" onChange={(e)=>setCPassword(e.target.value)}/>
-                                <label for="confirmPass">Confirm Password</label>
-                                {ERR?(<span className="errors">{ERR.cpassword}</span>):(<></>)}
+                                <input type="text" class="form-control" id="social1"
+                                    placeholder="https://www.facebook.com/topdev21" onChange={(e)=>setsocial1(e.target.value)}/>
+                                <label for="confirmPass">Social Link 1</label>
+                                {ERR?(<span className="errors">{ERR.link1}</span>):(<></>)}
                             </div>
-                            <div class="form-group">
-                                <div class="d-flex justify-content-between flex-wrap pt-sm-2">
-                                    <div class="checkgroup">
-                                        <input type="checkbox" name="remember" id="remember" />
-                                        <label for="remember">Remember Me</label>
-                                    </div>
-                                    <a href="forgot-pass.html">Forgot Password?</a>
-                                </div>
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="social2"
+                                    placeholder="https://twitter.com/test" onChange={(e)=>setsocial2(e.target.value)}/>
+                                <label for="confirmPass">Social Link 2</label>
+                                {ERR?(<span className="errors">{ERR.link2}</span>):(<></>)}
                             </div>
                             <div class="form-group">
 
-     <span  class="d-block default-btn move-top" onClick={() => mysignup(username, password, email)}>Signups Now</span>
+                                <span  class="d-block create-profile" onClick={ createprofile}>Create Profile</span>
                                
                             </div>
                         </form>
-                        <button onClick={() => signup(username, password, email)}>Sign up</button>
+                        {/* <button onClick={() => signup(username, password, email)}>Sign up</button> */}
 
 
         </Modal.Body>
-      </Modal> */}
+      </Modal>
 
     </header>
         </>

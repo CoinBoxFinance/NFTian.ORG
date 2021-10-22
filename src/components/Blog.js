@@ -12,6 +12,7 @@ const Blog = () => {
     const [currentBlogs, setCurrentBlogs] = useState([]);
     const [pageNumbers, setPageNumbers] = useState([{"target": 0, "string": "1"}]);
     useEffect(async () => {
+    //    apiKey: "b4711ed7a62910d26d65f6c04713efc48b267b7faa6b880f2e36117dbab97b93"
         const response = await fetch('https://min-api.cryptocompare.com/data/v2/news/?feed=NFT');
         const myJson = await response.json(); //extract JSON from the http response
         setBlogs(myJson["Data"]);
@@ -77,7 +78,7 @@ const Blog = () => {
                         <h2>Blog Page </h2>
                     </div>
                     <ol class="breadcrumb">
-                        <li><a href="index.html">Home</a></li>
+                        <li><a >Home</a></li>
                         <li class="active">Blog Page </li>
                     </ol>
                 </div>
@@ -92,7 +93,15 @@ const Blog = () => {
                     <div class="col-lg-9 col-12">
                         <div class="blog-wrapper">
                         { blogs.length != 0 && 
-                        (currentBlogs.map((blog) => (
+                        (currentBlogs.map((blog)=> {
+                    console.log( new Date(blog.published_on*1000).toDateString(),blog.published_on)
+                            const d =new Date(blog.published_on*1000);
+                            ;
+                           let date = new Date(blog.published_on*1000).toDateString()+" "+d.getHours()+":"+d.getMinutes()+":"+d.getSeconds()
+   
+                            
+                           return (
+                        
                             <div class="post-item">
                                 <div class="post-item-inner">
                                     <div class="post-thumb">
@@ -102,7 +111,7 @@ const Blog = () => {
                                         </a>
                                     </div>
                                     <div class="post-content">
-                                        <span class="meta">By <a href="#">Admin</a> March 24, 2021</span>
+                                        <span class="meta">By <a href="#">{blog.source}</a> {date}</span>
                                         <h3><a href={blog.url} target = "_blank">{blog.title}</a></h3>
                                         <p>{blog.body}</p>
                                     </div>
@@ -118,7 +127,9 @@ const Blog = () => {
                                     </div>
                                 </div>
                             </div>
-                        )))
+                        )
+                                            }
+                        ))
                         }
                         </div>
                         <div class="paginations">

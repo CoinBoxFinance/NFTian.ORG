@@ -1,7 +1,7 @@
 
 export const formValidation = {
     loginvalidation,
-
+    createprofile,
     Register_validation,
     item_validation,
     password_validation,
@@ -9,11 +9,60 @@ export const formValidation = {
     
   
 };
+function createprofile(params,errors){
+  let fields = params;
+  errors.formIsValid = true;
 
+  if (!fields["email"] || fields["email"].trim()==="") {
+    errors.formIsValid = false;
+    errors.email='E-mail field can’t be empty.'
+ }else{
+  if (fields["email"] !== "") {
+    var pattern = new RegExp(/^[_a-z0-9-]+(\.[_a-z0-9-]+)*(\+[a-z0-9-]+)?@[a-z0-9-]+(\.[a-z0-9-]+)*$/i);
+    if (!pattern.test(fields["email"])) {
+      errors.formIsValid = false;
+      errors.email='Entered E-mail address is not valid.'
+    }else{
+      // emailvalid = true
+      errors.email=''
+     }
+  } 
+ }
+ if (!fields["firstname"] || fields["firstname"].trim()==="") {
+  errors.formIsValid = false;
+  errors.firstname='First Name field can’t be empty.'
+}else{
+}
+if (!fields["lastname"] || fields["lastname"].trim()==="") {
+  errors.formIsValid = false;
+  errors.lastname='Last Name field can’t be empty.'
+}else{
+}
+if (!fields["username"] || fields["username"].trim()==="") {
+  errors.formIsValid = false;
+  errors.lastname='Last Name field can’t be empty.'
+}else{
+}
+if(fields["social_link1"].trim()){
+  let url = fields["social_link1"].match(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/g);
+  if(!url){
+    errors.formIsValid = false;
+    errors.link1 = 'Entered social link is not a valid link.'
+  }
+}
+if(fields["social_link2"].trim()){
+  let url = fields["social_link2"].match(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/g);
+  if(!url){
+    errors.formIsValid = false;
+    errors.link2 = 'Entered social link is not a valid link.'
+  }
+}
+return errors;
+}
 function loginvalidation(params,errors) {
   
     let fields = params;
-    // let errors :any = [];
+    // let errors :any = []; 
 
   
  

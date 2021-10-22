@@ -4,22 +4,33 @@ import { useMoralis,useMoralisFile } from "react-moralis";
 import axios from 'axios';  
 import 'react-tabs/style/react-tabs.css';
 import React,{useState} from "react";
-import {tokenContractAbi,nftAbi,marketAbi} from "./abi";
+import {nftAbi,marketAbi} from "./abi";
 import { formValidation } from '../_services';
 import NFT from '../artifacts/contracts/NFT.sol/NFT.json'
 import Market from '../artifacts/contracts/Market.sol/NFTMarket.json'
+import {CopyToClipboard} from 'react-copy-to-clipboard';
 import { ethers } from 'ethers'
+import profile from "../images/profile/pro.jpg"
+import cover from "../images/profile/cover.jpg"
 import {
     nftaddress, nftmarketaddress
   } from './config'
   import DatePicker from "react-datepicker";
   import "react-datepicker/dist/react-datepicker.css";
+  import { useParams } from 'react-router-dom';
+  import { NFTStorage, File } from 'nft.storage'
+  import { IpfsUrl } from 'react-ipfs-url';
+  import { LoadingSpinerComponent } from '../components/common/loader';
 const Author = () => {
     const { web3, enableWeb3,user,Moralis } = useMoralis()
     const [tokenContractAddress, settokenContractAddress] = React.useState();
     const [marketContractAddress, setMarketContractAddress] = React.useState();
     const [imageFile, setimageFile] = React.useState();
     const [imageFileshow, setimageFileshow] = React.useState();
+    const [profileFile, setprofileFile] = React.useState();
+    const [profileFileshow, setprofileFileshow] = React.useState();
+    const [coverFile, setcoverFile] = React.useState();
+    const [coverFileshow, setcoverFileshow] = React.useState();
     const [name, setname] = React.useState('');
     const [price, setprice] = React.useState();
     const [description, setdescription] = React.useState();
@@ -32,20 +43,40 @@ const Author = () => {
     const [marketItems,setMarketitems] = React.useState([]);
     const [myNftitems,setMyNftitems] = React.useState([]);
     const [nftType , setNftType] = React.useState("fixed_price");
-    
+    const [copy , setCopy] = React.useState(false);
+    const[loader,setLoader]=useState(false)
+    const [ERRs, setERR] = React.useState('');
     const [show, setShow] = useState(false);
-
+    const [showm, setshowmodale] = React.useState(false);
+    const [username, setusername] = React.useState('');
+    const [fname, setfname] = React.useState('');
+    const [lname, setlname] = React.useState('');
+    const [email, setemail] = React.useState('');
+    const [social1, setsocial1] = React.useState('');
+    const [social2, setsocial2] = React.useState('');
     const [nameAuction, setNameAuction] = React.useState('');
     const [descriptionAuction, setDescriptionAuction] = React.useState('');
     const [minBid, setMinBid] = React.useState('');
     const [startDate , setStartDate] = React.useState(new Date());
     const [endDate , setEndDate] = React.useState('');
-
+    const [selectedTabIndex, setSelectedTabIndex] = React.useState(0);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
-    const TOKEN_CONTRACT_ADDRESS = "0x16e2715443373a907416206D80eA42e424Fd683f";
+  const TOKEN_CONTRACT_ADDRESS = "0x16e2715443373a907416206D80eA42e424Fd683f";
+  const { userWalletAddress } = useParams();
+  console.log("userWalletAddress",userWalletAddress);
+  const queryParams = new URLSearchParams(window.location.search);
+  const tabSelected = queryParams.get('tab');
+  
+  const handleClosem = () => setshowmodale(false);
+  console.log("tabtabSelected",tabSelected);
+ 
 
-     const formerrors = {
+    const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDg4QUI4NmU3NWNEZDkyZUQ2RmFiOTIxNEI1NDhkNDlmMTNENWFEODkiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNDU0MTc3OTg3MywibmFtZSI6ImNiZmkifQ.LOyAxxdCPLhoT3rAnMJrVkzSqzsQ1GVRP3ic_l7ZC7o';
+    const client = new NFTStorage({ token: apiKey })
+    const ipfs = client;
+  
+  const formerrors = {
          name:"",
          image:"",
          description:"",
@@ -76,6 +107,75 @@ onClick={()=>selectcat(c)} id={c}>
           })
          } 
 
+         const openTab = (tab_link) => {
+            console.log("tab_link----",tab_link);
+            var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?tab='+tab_link;
+            window.history.pushState({path:newurl},'',newurl);
+            check_active_tab(tab_link);
+            if(tab_link== "created"){
+                console.log("in created tab and getitems going to call");
+                getitems()
+            }
+
+         }
+         const openDetail = (token_id) => {
+            console.log("token_id",token_id);
+            window.location.href = "/nft/"+token_id;
+         }
+         const errorsp = {
+            email: "",
+            firsname:"",
+            lastname:"",
+            link1:"",
+            link2:"",
+           formIsValid:false,
+         };
+       
+         const createprofile = async () => {
+            // console.log(user,"=====current");
+           
+            // setLoader(true)
+            let params = {
+                "username":username,
+                "firstname":fname,
+                "lastname":lname,
+                "email":email,
+                "social_link1":social1,
+                "social_link2":social2,
+                
+            }
+            
+            let validate = formValidation.createprofile(params,errorsp);
+            setERR(validate)
+            if(validate.formIsValid){
+                setLoader(true)
+            user.set("username", username);
+            user.set("firstname", fname);
+            user.set("lastname", lname);
+            user.set("email", email);
+            user.set("social_link1", social1);
+            user.set("social_link2", social2);
+          
+            await user.save() .then((response) => {
+               
+                
+                    console.log("Sucessfully updated")
+                    console.log(response)
+                    setLoader(false)
+                    setshowmodale(false)
+                
+            })
+            .catch((err) => {
+                setLoader(true)
+                console.log("Failed update")
+                //  console.log(error)
+                console.error("Error signing in.", err.toString());
+            // setErrorMsg(response.toString());
+            })
+        }
+           
+          };   
+
 const selectcat = (c)=>{
     // const currentClass = document.getElementsByClassName("item-cat-btn");
     // for (let i = 0; i < currentClass.length; i++) {
@@ -97,7 +197,7 @@ const selectcat = (c)=>{
 		  return true;
 		  } else {
 	   
-			// setprofileERR("Please select a valid image file")
+			alert("Please select a valid image file")
 		   return false;
 		  }
 		}
@@ -131,14 +231,79 @@ delta -= minutes * 60;
     return hsh;
 
 }
+const saveprofileimage= async(file)=>{
+    console.log("00000000")
+    const data = file
+    const files = new Moralis.File(data.name, data);
+    await files.saveIPFS();
+    const nftFileMetadataFilePath = files.ipfs();
+    user.set("profile",nftFileMetadataFilePath)
+     console.log(nftFileMetadataFilePath)
+     await user.save() .then((response) => {
+         setprofileFileshow(nftFileMetadataFilePath)
+         console.log(response)
+      })  .catch((err) => { })
+   
+}
+const savecoverimage= async(file)=>{
+   
+    const data = file
+    const files = new Moralis.File(data.name, data);
+    await files.saveIPFS();
+    const nftFileMetadataFilePath = files.ipfs();
+    user.set("cover",nftFileMetadataFilePath)
+  
+     console.log(nftFileMetadataFilePath)
+     await user.save() .then((response) => {
+        setcoverFileshow(nftFileMetadataFilePath)
+        console.log(response)
+     })  .catch((err) => { })
+   
+}
 
+function readURLprofile(input) {
+    //
+   
+    if (input.files && input.files[0]) {
+      var filetype = checkfile(input.files[0]);
+       if(filetype===true){
+           setprofileFile(input.files[0])
+           saveprofileimage(input.files[0])
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            setprofileFileshow(e.target.result)
+          }
+        reader.readAsDataURL(input.files[0]);
+        //console.log(formData)
+      }
+    }
+    // openModalcrop()
+}
+function readURLcover(input) {
+    //
+   
+    if (input.files && input.files[0]) {
+      var filetype = checkfile(input.files[0]);
+       if(filetype===true){
+           setcoverFile(input.files[0])
+           savecoverimage(input.files[0])
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            setcoverFileshow(e.target.result)
+          }
+        reader.readAsDataURL(input.files[0]);
+        //console.log(formData)
+      }
+    }
+    // openModalcrop()
+}
 	function readURL(input) {
 		//
 		if (input.files && input.files[0]) {
 		  var filetype = checkfile(input.files[0]);
 		   if(filetype===true){
                setimageFile(input.files[0])
-	
+              
             var reader = new FileReader();
 			reader.onload = function(e) {
 				setimageFileshow(e.target.result)
@@ -151,13 +316,95 @@ delta -= minutes * 60;
 	}
 //create item 
 
+function check_active_tab(tabSelected){
+    if(tabSelected == "create"){
+        setSelectedTabIndex(0)
+      }else if(tabSelected == "sale"){
+        setSelectedTabIndex(1)
+      }else if(tabSelected == "owned"){
+        setSelectedTabIndex(2)
+      }else if(tabSelected == "created"){
+        setSelectedTabIndex(3)
+      }else if(tabSelected == "collection"){
+        setSelectedTabIndex(4)
+      }
+      else{
+    
+      } 
+}
+
+
 React.useEffect(() => {
 
-    console.log("------------------------999999999999999",ethers.utils.parseEther("1.0"))
+    const queryParams = new URLSearchParams(window.location.search);
+    const tabSelected = queryParams.get('tab');
+    console.log("tabtabSelected",tabSelected);
+    check_active_tab(tabSelected);
+   
+
+
+    if(user && user.get('profile')){
+       
+        setprofileFileshow(user.get('profile'))
+    }else{
+        setprofileFileshow(profile)  
+    }
+        
+    if(user && user.get('cover')){
+       
+        setcoverFileshow(user.get('cover'))
+    }else{
+        setcoverFileshow(cover)  
+    }
+     if(user){
+        if(user.get('profile')){
+           
+            setprofileFileshow(user.get('profile'))
+        }
+        if(user.get('cover')){
+           
+            setcoverFileshow(user.get('cover'))
+        }
+        if(user.get('firstname')){
+           
+            setfname(user.get('firstname'))
+        }
+        if(user.get('lastname')){
+           
+            setlname(user.get('lastname'))
+        }
+        if(user.get('email')){
+           
+            setemail(user.get('email'))
+        }
+        if(user.get('social_link1')){
+           
+            setsocial1(user.get('social_link1'))
+        }
+        if(user.get('social_link2')){
+           
+            setsocial1(user.get('social_link2'))
+        }
+        if(user.get('username')){
+           
+            setusername(user.get('username'))
+        }
+        
+        const userAddress = user.get('ethAddress');
+        setusrAddress(userAddress)
+
+
+            getitems(userAddress);
+
+
+       } 
+    
+    // console.log("this.props.location.search",this.props);
+    // console.log("------------------------999999999999999",ethers.utils.parseEther("1.0"))
     init();
     
     //  getitems()
-  }, []);
+  }, [user]);
 //   const init = () => {
 //     enableWeb3()
    
@@ -168,28 +415,71 @@ React.useEffect(() => {
 //     settokenContractAddress(tokenContract)
   
 //   }
+const clipto = () => {
+    setCopy(true)
+    setTimeout(function(){ setCopy(false) }, 500);
+}
 
 const init = async () => {
     // hideElement(userItemsSection);
   
   const web3 = await Moralis.Web3.enable();
-  console.log("abiiii",tokenContractAbi)
+//   console.log("abiiii",tokenContractAbi)
   const tokenContract = new web3.eth.Contract(nftAbi, nftaddress);
   const marketContract = new web3.eth.Contract(marketAbi,nftmarketaddress)
   var  user = await Moralis.User.current();
-  
-  const userAddress = user.get('ethAddress');
-  setusrAddress(userAddress)
-  settokenContractAddress(tokenContract)
-  setMarketContractAddress(marketContract);
+  console.log("user===>",user)
+  if(user){
+    // if(user.get('profile')){
+       
+    //     setprofileFileshow(user.get('profile'))
+    // }
+    // if(user.get('cover')){
+       
+    //     setcoverFileshow(user.get('cover'))
+    // }
+    // if(user.get('firstname')){
+       
+    //     setfname(user.get('firstname'))
+    // }
+    // if(user.get('lastname')){
+       
+    //     setlname(user.get('lastname'))
+    // }
+    // if(user.get('email')){
+       
+    //     setemail(user.get('email'))
+    // }
+    // if(user.get('social_link1')){
+       
+    //     setsocial1(user.get('social_link1'))
+    // }
+    // if(user.get('social_link2')){
+       
+    //     setsocial1(user.get('social_link2'))
+    // }
+    // if(user.get('username')){
+       
+    //     setusername(user.get('username'))
+    // }
+    
+    const userAddress = user.get('ethAddress');
+    setusrAddress(userAddress)
+    settokenContractAddress(tokenContract)
+    setMarketContractAddress(marketContract);
+  }  
 
- loadNFTs(tokenContract,marketContract)
- loadMyNfts(tokenContract,marketContract)
+
+//  loadNFTs(tokenContract,marketContract)
+//  loadMyNfts(tokenContract,marketContract)
 //  fetchMyNFTs
 
 }
 
   const createItem = async () => {
+    handleShow()
+    setmessage1("Initiating")
+    setmessage2("Image saving to IPFS");
     let params,validate;
     if(nftType == "fixed_price"){
         params = { name:name, image:imageFile,description:description, price:price }
@@ -201,7 +491,7 @@ const init = async () => {
         validate = formValidation.item_validation_auction(params,formerrors);
     }
     console.log("params")
-console.log("validate",validate);
+    console.log("validate",validate);
     if(validate.formIsValid){
     var attributes = [{
         "trait_type" : "Category",
@@ -213,30 +503,44 @@ console.log("validate",validate);
     }
 ]
 console.log("imaged going to saved");
-     const nftFile = new Moralis.File("nftFile.jpg",imageFile);
-     await nftFile.saveIPFS();
+
+console.log("imagefile",imageFile);
+const metadata = await client.store({
+    name: params.name,
+    description: params.description,
+    image: imageFile,
+    attribute:attributes
+  })
+
+  console.log("image saved");
+  console.log("metadata.url",metadata.url)
+
+
+    //  const nftFile = new Moralis.File("nftFile.jpg",imageFile);
+    //  await nftFile.saveIPFS();
+     setmessage2("Image saved to IPFS");
     console.log("imaged saved");
-const nftFilePath = nftFile.ipfs();
+    // const nftFilePath = nftFile.ipfs();
 //  const nftFile = saveFile("nftFile.jpeg", imageFile.files[0], { saveIPFS: true });
    
 //    const  nftFilePath = nftFile.ipfs
 
-    const metadata = {
-        name: params.name,
-        description: params.description,
-        image: nftFilePath,
-        attribute:attributes
+    // const metadata = {
+    //     name: params.name,
+    //     description: params.description,
+    //     image: nftFilePath,
+    //     attribute:attributes
 
-    };
-
+    // };
+    setmessage2("Waiting for approval");
     // const  nftFileMetadataFile = saveFile("metadata.json", {base64 : btoa(JSON.stringify(metadata))}, { saveIPFS: true });
- const nftFileMetadataFile = new Moralis.File("metadata.json", {base64 : btoa(JSON.stringify(metadata))});
-     await nftFileMetadataFile.saveIPFS()
+//  const nftFileMetadataFile = new Moralis.File("metadata.json", {base64 : btoa(JSON.stringify(metadata))});
+//      await nftFileMetadataFile.saveIPFS()
 
-     const nftFileMetadataFilePath = nftFileMetadataFile.ipfs();
-     console.log(nftFileMetadataFilePath)
+    //  const nftFileMetadataFilePath = nftFileMetadataFile.ipfs();
+    //  console.log(nftFileMetadataFilePath)
 
-    const nftId = await mintNft(nftFileMetadataFilePath);
+    const nftId = await mintNft(metadata.url);
 
 
 }else{
@@ -263,7 +567,7 @@ const clearfields = () =>{
     console.log(tokenContractAddress)
  await tokenContractAddress.methods.createToken(metadataUrl).send({from: userAddress}) 
 .on("transactionHash", function (hash) {
-    handleShow()
+    // handleShow()
     setmessage1("Initiating")
     setmessage2("Waiting for reciept.")
     console.log("Hash",hash);
@@ -271,11 +575,11 @@ const clearfields = () =>{
 .on("receipt", function (tx) {
     console.log("receipt mint",tx);
 
-let tokenId = tx.events.Transfer.returnValues.tokenId;
+// let tokenId = tx.events.Transfer.returnValues.tokenId;
     setmessage1("Got reciept!!")
     // setmessage2("waiting for confirmation!!")
-    setmessage2("Adding to markerplace");
-    addToMarket(tokenId);
+    setmessage2("Transaction submitted. Item will be available in your profile once we receive a blockchain confirmation.");
+    // addToMarket(tokenId);
 //    console.log("receipt",receipt);
 })
 .on("confirmation", function (conf) {
@@ -283,10 +587,13 @@ let tokenId = tx.events.Transfer.returnValues.tokenId;
     setmessage1("")
     setmessage2("Confirmed!!")
     
-    // setTimeout(() => {
-    //     clearfields()
-    //     handleClose()
-    // }, 5000);
+    setTimeout(() => {
+        clearfields()
+        handleClose()
+        window.location.href="/user/"+userAddress+"?tab=created";
+        getitems()
+        // alert("send to detail page");
+    }, 1000);
   
 })
 .on("error", async function (error) {
@@ -387,15 +694,19 @@ console.log("end_date_sendTimestamp",end_date_sendTimestamp);
 
 
 //creted listing
-const getitems = () => {
-    
+const getitems = (address_on_load = null) => {
+    console.log("get items calleddddddd");
 
     const userAddress = currentUserAddress;
     // const token = "0xAdD3D936A8EC1A4969bA73e19815cad2B7CDb086";
     // alert(userAddress)
-    let url =  `https://deep-index.moralis.io/api/v2/`+userAddress+`/nft/`+TOKEN_CONTRACT_ADDRESS+`?chain=rinkeby&format=decimal`;
+    console.log("userAddress",userAddress)
+    let tmp_adr = userAddress || address_on_load
+    console.log("nftaddress",nftaddress)
+    let url =  `https://deep-index.moralis.io/api/v2/`+tmp_adr+`/nft/`+nftaddress+`?chain=rinkeby&format=decimal`;
     const headers = {  headers: {"X-API-Key": "3Ur7Kdm9AtnEnIt6haF5rEFGy2gzRFRUwVI4HxtYCJJq38su3dxYEsHpxk1v5Lip"} }
       axios.get(url,headers).then(function (response) {
+        console.log("response.dataaaaaaaaaaaa",response.data)
         setMyitems(response.data.result)
     }).catch(error => {
     });
@@ -576,9 +887,11 @@ async function bidNft(nft) {
    let createdItems = []
    if(myitems){
        createdItems = myitems.map(function(item,index){
+        console.log("createdItemssss",createdItems)
         let itemdata  = JSON.parse(item.metadata);
       
     if(itemdata){
+        console.log("itemdatasssss",itemdata);
         let attri = []
         attri  = itemdata.attribute.map(function(item1,index){
             return(<><p>{item1.trait_type}:
@@ -588,7 +901,7 @@ async function bidNft(nft) {
             </p><br></br></>)
                 })
            return (  <div class="col-lg-4 col-sm-6">
-           <div class="nft-item">
+           <div class="nft-item" onClick={() => openDetail(item.token_id)} >
                <div class="nft-inner">
                    
                    <div class="nft-item-top d-flex justify-content-between align-items-center">
@@ -598,7 +911,7 @@ async function bidNft(nft) {
                                <li
                                    class="single-author d-flex align-items-center">
                                   
-                                   <h6><a href="/author">{currentUserAddress}</a>
+                                   <h6><a href="/user">{item.owner_of}</a>
                                    </h6>
                                </li>
                            </ul>
@@ -632,7 +945,19 @@ async function bidNft(nft) {
                    
                    <div class="nft-item-bottom">
                        <div class="nft-thumb">
-                       {itemdata.image?(<img src={itemdata.image} alt="" />):(<img src={require('../images/nft-item/03.gif') .default} alt="" />)}
+
+                       <IpfsUrl ipfs={ ipfs } input={itemdata.image} >
+        { ({ status, value }) => (
+            <>
+                { status === 'pending' && 'Loading...' }
+                { status === 'rejected' && 'Oops, failed to load' }
+                { status === 'fulfilled' && <img src={ value } alt="" /> }
+            </ >
+        ) }
+    </IpfsUrl>
+
+
+                       {/* {itemdata.image?(<img src={itemdata.image} alt="" />):(<img src={require('../images/nft-item/03.gif') .default} alt="" />)} */}
                 
                          
 
@@ -660,46 +985,26 @@ async function bidNft(nft) {
 
     return(
         <>
-      
-     
-      
-    <section class="page-header-section style-1">
-        <div class="container">
-            <div class="page-header-content">
-                <div class="page-header-inner">
-                    <div class="page-title">
-                        <h2>Author Profile</h2>
-                    </div>
-                    <ol class="breadcrumb">
-                        <li><a href="/">Home</a></li>
-                        <li class="active">Alex Joew</li>
-                        
-
-                    </ol>
-                </div>
-            </div>
-        </div>
-    </section>
-  
-
-
+         
     <section class="profile-section padding-top padding-bottom">
+    <LoadingSpinerComponent promiseInProgress={loader} />
         <div class="container">
             <div class="section-wrapper">
                 <div class="member-profile">
                     <div class="profile-item">
                         <div class="profile-cover">
-                            <img src={require('../images/profile/cover.jpg').default} alt="" />
+                            <img src={coverFileshow} alt="" />
                             {/* <img src="assets/images/profile/cover.jpg" alt="cover-pic"> */}
                             <div class="edit-photo custom-upload">
                                 <div class="file-btn"><i class="icofont-camera"></i>
                                     Edit Photo</div>
-                                <input type="file" />
+                                <input type="file" onChange={(e)=>readURLcover(e.target)}/>
                             </div>
                         </div>
                         <div class="profile-information">
-                            <div class="profile-pic">
-                                <img src={require('../images/profile/pro.jpg').default} alt="" />
+                            <div class="profile-pic"> 
+                            
+                                <img src={profileFileshow} alt="" />
                                 {/* <img src="assets/images/profile/Profile.jpg" alt="DP"> */}
                                 <div class="custom-upload">
                                     <div class="file-btn">
@@ -707,12 +1012,15 @@ async function bidNft(nft) {
                                             Edit</span>
                                         <span class="d-lg-none mr-0"><i class="icofont-plus"></i></span>
                                     </div>
-                                    <input type="file" />
+                                    <input type="file"  onChange={(e)=>readURLprofile(e.target)}/>
                                 </div>
                             </div>
                             <div class="profile-name">
-                                <h4>Alex joe</h4>
-                                <p>@alexjoe.jxe</p>
+                             {user && user.get('firstname')?(<h4>{user.get('firstname')} {user.get('lastname')}</h4>):(<h4>-- --</h4>)}  
+                             <i class="fa fa-pencil-square-o edit-icon" aria-hidden="true"onClick={()=>setshowmodale(true)}></i> 
+                             {user && user.get('email')?( <p>{user.get('email')}</p>):(<></>)}
+                             {user && user.get('social_link1')?( <h6><i class="fa fa-link" aria-hidden="true"></i> {user.get('social_link1')}</h6>):(<></>)}
+                             {user && user.get('social_link2')?( <h6><i class="fa fa-link" aria-hidden="true"></i> {user.get('social_link2')}</h6>):(<></>)}
                             </div>
                             <ul class="profile-contact">
                                 <li class="crypto-copy">
@@ -720,30 +1028,18 @@ async function bidNft(nft) {
                                         <input id="cryptoLink" value={currentUserAddress} readonly />
                                         <div id="cryptoCopy" data-bs-toggle="tooltip" data-bs-placement="top"
                                             title="Copy Address">
+                                                   <CopyToClipboard text={currentUserAddress} onCopy={clipto}>
                                             <span class="copy-icon">
+                                                
                                                 <i class="icofont-ui-copy" aria-hidden="true"
                                                     data-copytarget="#cryptoLink"></i>
                                             </span>
+                                            </CopyToClipboard>
+                                            {copy?(<span>Copied</span>):(<></>)}
 
                                         </div>
                                     </div>
 
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <div class="icon"><i class="icofont-ui-rate-add"></i></div>
-                                        <div class="text">
-                                            <p>Follow</p>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <div class="icon"><i class="icofont-speech-comments"></i></div>
-                                        <div class="text">
-                                            <p>Send Message</p>
-                                        </div>
-                                    </a>
                                 </li>
                             </ul>
 
@@ -830,17 +1126,16 @@ async function bidNft(nft) {
                                 <div>
                                     <div class="row">
                                         <div class="col-xl-12">
-                                        <Tabs>
+                                        <Tabs selectedIndex={selectedTabIndex} >
                                             <article>
                                                 <div class="activity-tab">
                                                     
-                                                    <TabList className="nav nav-pills mb-30 px-2 ">
- 
-                                                        <Tab className="nav-link"><i class="icofont-flask"></i> Create NFT</Tab>
-                                                        <Tab className="nav-link"><i class="icofont-flash"></i> On Sale</Tab>
-                                                        <Tab className="nav-link"><i class="icofont-license"></i> owned</Tab>
-                                                        <Tab className="nav-link" onClick={getitems}><i class="icofont-puzzle"></i> Created</Tab>
-                                                        <Tab className="nav-link"><i class="icofont-library"></i> Collection</Tab>
+                                                    <TabList  className="nav nav-pills mb-30 px-2 ">
+                                                        <Tab onClick={() => openTab("create")} className="nav-link"><i class="icofont-flask"></i> Create NFT</Tab>
+                                                        <Tab onClick={() => openTab("sale")} className="nav-link"><i class="icofont-flash"></i> On Sale</Tab>
+                                                        <Tab onClick={() => openTab("owned")} className="nav-link"><i class="icofont-license"></i> Owned</Tab>
+                                                        <Tab onClick={() => openTab("created")} className="nav-link" ><i class="icofont-puzzle"></i> Created</Tab>
+                                                        <Tab onClick={() => openTab("collection")} className="nav-link"><i class="icofont-library"></i> Collection</Tab>
                                                         <Dropdown className="all-box-tab">
                                                             <Dropdown.Toggle variant="unset" id="dropdown-basic" className="header__nav-link">
                                                             All
@@ -3185,7 +3480,7 @@ async function bidNft(nft) {
         </div>
     </section>
     
-    
+  
 
       <Modal show={show} onHide={handleClose}
       size="md"
@@ -3202,6 +3497,72 @@ async function bidNft(nft) {
             <p>{message2}</p>
         </Modal.Body>
       </Modal>
+      <Modal show={showm} onHide={handleClosem}
+        
+        size="md"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered className="loader-modal">
+            <Modal.Header closeButton>
+            <Modal.Title> <h3 style={{marginLeft:"15px"}}>Create Profile</h3></Modal.Title>
+                </Modal.Header>
+          <Modal.Body className="text-center py-0">
+             
+              
+              <form class="account-form">
+                              <div class="form-floating mb-3">
+                                  <input type="email" value={email} class="form-control" id="userIdInput" placeholder="name@example.com"  onChange={(e)=>setemail(e.target.value)}/>
+                                  <label for="userIdInput">Email</label>
+                                  {ERRs?(<span className="errors">{ERRs.email}</span>):(<></>)}
+                              </div>
+                              <div class="form-floating mb-3">
+                                <input type="text" value={username} class="form-control" id="floatingInput"
+                                    placeholder="John" onChange={(e)=>setusername(e.target.value)}/>
+                                <label for="floatingInput">Username</label>
+                                {ERRs?(<span className="errors">{ERRs.username}</span>):(<></>)}
+
+                            </div>
+                              <div class="form-floating mb-3">
+                                  <input type="text" value={fname} class="form-control" id="floatingInput"
+                                      placeholder="John" onChange={(e)=>setfname(e.target.value)}/>
+                                  <label for="floatingInput">First Name</label>
+                                  {ERRs?(<span className="errors">{ERRs.firstname}</span>):(<></>)}
+  
+                              </div>
+                              {/* <div class="form-floating mb-3">
+                                  <input type="password" class="form-control" id="floatingPassword"
+                                      placeholder="Password" onChange={(e)=>setPassword(e.target.value)}/>
+                                  <label for="floatingPassword" >Password</label>
+                                  {ERR?(<span className="errors">{ERR.password}</span>):(<></>)}
+                              </div> */}
+                              <div class="form-floating mb-3">
+                                  <input type="text" value={lname} class="form-control" id="confirmPass"
+                                      placeholder="Smith" onChange={(e)=>setlname(e.target.value)}/>
+                                  <label for="confirmPass">Last Name</label>
+                                  {ERRs?(<span className="errors">{ERRs.lastname}</span>):(<></>)}
+                              </div>
+                              <div class="form-floating mb-3">
+                                  <input type="text" value={social1} class="form-control" id="social1"
+                                      placeholder="https://www.facebook.com/topdev21" onChange={(e)=>setsocial1(e.target.value)}/>
+                                  <label for="confirmPass">Social Link 1</label>
+                                  {ERR?(<span className="errors">{ERRs.link1}</span>):(<></>)}
+                              </div>
+                              <div class="form-floating mb-3">
+                                  <input type="text" value={social2} class="form-control" id="social2"
+                                      placeholder="https://twitter.com/test" onChange={(e)=>setsocial2(e.target.value)}/>
+                                  <label for="confirmPass">Social Link 2</label>
+                                  {ERRs?(<span className="errors">{ERRs.link2}</span>):(<></>)}
+                              </div>
+                              <div class="form-group">
+  
+                                  <span  class="d-block create-profile" onClick={createprofile}>Update Profile</span>
+                                 
+                              </div>
+                          </form>
+                          {/* <button onClick={() => signup(username, password, email)}>Sign up</button> */}
+  
+  
+          </Modal.Body>
+        </Modal>
         </>
     )
 }
